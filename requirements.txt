@@ -1,0 +1,9 @@
+pandas
+numpy
+pytest
+rapidfuzz
+scikit-learn
+matplotlib
+seaborn
+category_encoders
+PyQt5
