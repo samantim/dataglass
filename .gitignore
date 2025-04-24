@@ -5,7 +5,6 @@ env
 __pycache__
 old*
 models
-.rasa
 output
 outputs
 
