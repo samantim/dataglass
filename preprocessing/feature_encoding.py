@@ -1,22 +1,26 @@
 import pandas as pd
-import sys
-from os import path, makedirs
-import shutil
-import logging
 from typing import List
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 import category_encoders as ce
 from enum import Enum
 from math import log2, ceil
-
+import warnings
 
 class CategoricalEncodingMethod(Enum):
+    """
+    Enumeration of categorical encoding methods.
+
+    Options:
+        LABEL_ENCODING (int): Encodes categories as integers.
+        ONEHOT_ENCODING (int): Encodes categories as one-hot vectors.
+        HASHING (int): Encodes categories using the hashing trick.
+    """
     LABEL_ENCODING = 1
     ONEHOT_ENCODING = 2
     HASHING = 3
 
 
-def get_observing_columns(data : pd.DataFrame, columns_subset : List) -> List:
+def _get_observing_columns(data : pd.DataFrame, columns_subset : List) -> List:
     # Prepare observing columns
     # Strip whitespaces
     if columns_subset: columns_subset = [col.strip() for col in columns_subset]
@@ -25,21 +29,31 @@ def get_observing_columns(data : pd.DataFrame, columns_subset : List) -> List:
         categorical_columns = data.select_dtypes(exclude="number").columns
         # If columns_subset is not None and one of its columns does not exist in categorical columns
         if columns_subset and not all(col in categorical_columns for col in columns_subset):
-            logging.error("The columns subset contains numeric columns!")
-            return []
+            raise ValueError("The columns subset contains numeric columns!")
+
         else:
             # If there is a valid subset, it is considered as the observing columns otherwise all categorical columns are considered
             observing_columns = columns_subset if columns_subset else categorical_columns
     except:
-        logging.error("The columns subset is not valid!")
-        return []
+        raise ValueError("The columns subset is not valid!")
 
     return observing_columns 
 
 
 def encode_categorical(data : pd.DataFrame, categorical_encoding_method : CategoricalEncodingMethod, columns_subset : List = None) -> pd.DataFrame:
+    """
+    Encodes categorical columns using the specified encoding method.
+
+    Args:
+        data (pd.DataFrame): Input DataFrame.
+        categorical_encoding_method (CategoricalEncodingMethod): Encoding method to apply. Options: LABEL_ENCODING, ONEHOT_ENCODING, HASHING.
+        columns_subset (List, optional): List of categorical columns to encode. If None, all non-numeric columns are used.
+
+    Returns:
+        pd.DataFrame: DataFrame with new encoded columns appended.
+    """
     # Check if column_subset is valid
-    observing_columns = get_observing_columns(data, columns_subset)
+    observing_columns = _get_observing_columns(data, columns_subset)
     if len(observing_columns) == 0: return data
 
     match categorical_encoding_method:
@@ -59,7 +73,7 @@ def encode_categorical(data : pd.DataFrame, categorical_encoding_method : Catego
                 # The column names also created by the model
                 encoded_columns_name = onehot_encoder.get_feature_names_out([col])
                 # Create a dataframe with contents and the column names
-                encoded_df = pd.DataFrame(data = encoded_columns, columns=encoded_columns_name)
+                encoded_df = pd.DataFrame(data = encoded_columns, columns=encoded_columns_name, index=data.index)
                 # Concat the new datafram to end of original columns
                 data = pd.concat([data, encoded_df], axis=1)
 
@@ -69,7 +83,7 @@ def encode_categorical(data : pd.DataFrame, categorical_encoding_method : Catego
                 # It is the optimal number of components to reduce the collisions while having good performance
                 unique_len = len(data[col].unique())
                 # Throw a warning for the less number of unique values
-                if unique_len < 10: logging.warning(f"Hashing for category number less than 10 is not reasonable (column='{col}', category number={unique_len}), and the results would not be promising!")
+                if unique_len < 10: warnings.warn(f"Hashing for category number less than 10 is not reasonable (column='{col}', category number={unique_len}), and the results would not be promising!")
                 n_components=ceil(log2(unique_len))
                 # Encode the observing columns using hashing encoder
                 hashing = ce.HashingEncoder(n_components = n_components, return_df=True)

@@ -3,6 +3,15 @@ from enum import Enum
 
 
 class AdjacentImputationMethod(Enum):
+    """
+    Enum for specifying the method to impute missing values based on adjacent data.
+
+    Attributes:
+        FORWARD (int): Forward fill – propagates last valid observation forward.
+        BACKWARD (int): Backward fill – uses next valid observation to fill missing values.
+        INTERPOLATION_LINEAR (int): Linearly interpolates missing values.
+        INTERPOLATION_TIME (int): Interpolates missing values assuming the index is time-based.
+    """
     # Enum classes make the code cleaner and avoid using invalid inputs
     FORWARD = 1
     BACKWARD = 2
@@ -11,6 +20,14 @@ class AdjacentImputationMethod(Enum):
 
 
 class NumericDatatypeImputationMethod(Enum):
+    """
+    Enum for specifying imputation methods applicable to numeric columns.
+
+    Attributes:
+        MEAN (int): Impute missing values using the mean of the column.
+        MEDIAN (int): Impute missing values using the median of the column.
+        MODE (int): Impute missing values using the mode of the column (most frequent value).
+    """
     # Enum classes make the code cleaner and avoid using invalid inputs
     # This enum specifies the method of imputation only for numeric columns, since for the categorical columns "MODE" is the only option
     MEAN = 1
@@ -34,7 +51,6 @@ def handle_missing_values_drop(data: pd.DataFrame, verbose : bool = False) -> pd
     pd.DataFrame
         DataFrame with rows containing missing values removed.
     """
-
     # Display dataset info before and after imputation if verbose is enabled
     # Check for missing values
     # It is also possible to use isnull() instead of isna()
@@ -70,7 +86,6 @@ def handle_missing_values_datatype_imputation(data : pd.DataFrame, numeric_datat
     pd.DataFrame
         DataFrame with missing values imputed.
     """
-    
     # Display dataset info before and after imputation if verbose is enabled
     # Check for missing values
     # It is also possible to use isnull() instead of isna()
@@ -126,7 +141,6 @@ def handle_missing_values_adjacent_value_imputation(data: pd.DataFrame, adjacent
     ValueError
         If the time reference column is missing or not in a valid datetime format when using time-based interpolation.
     """
-    
     # Display dataset info before and after imputation if verbose is enabled
     # Check for missing values
     # It is also possible to use isnull() instead of isna()

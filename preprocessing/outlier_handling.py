@@ -8,6 +8,15 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 class DetectOutlierMethod(Enum):
+    """
+    Enum for specifying methods to detect outliers in data.
+
+    Attributes:
+        IQR (int): Interquartile Range method - identifies outliers based on Q1 and Q3.
+        ZSCORE (int): Z-Score method - detects outliers using standard deviations from the mean.
+        ISOLATION_FOREST (int): Isolation Forest - uses a tree-based model to isolate anomalies.
+        LOCAL_OUTLIER_FACTOR (int): Local Outlier Factor - detects density-based local outliers.
+    """
     IQR = 1
     ZSCORE = 2
     ISOLATION_FOREST = 3
@@ -15,6 +24,14 @@ class DetectOutlierMethod(Enum):
 
 
 class HandleOutlierMethod(Enum):
+    """
+    Enum for specifying strategies to handle detected outliers.
+
+    Attributes:
+        DROP (int): Removes outlier rows from the dataset.
+        REPLACE_WITH_MEDIAN (int): Replaces outliers with the median value of the column.
+        CAP_WITH_BOUNDARIES (int): Caps outliers to the calculated lower and upper bounds.
+    """
     DROP = 1
     REPLACE_WITH_MEDIAN = 2
     CAP_WITH_BOUNDARIES = 3
@@ -59,7 +76,6 @@ def detect_outliers(data : pd.DataFrame, detect_outlier_method : DetectOutlierMe
     Raises:
         ValueError: If parameters are invalid.
     """
-
     # Parameter contamination_rate is used for training ISOLATION FOREST LOCAL OUTLIER FACTOR methods to set the boundries for outliers
     # Parameter n_neighbors is used for training OUTLIER FACTOR methods to set the number of observing neighbors
     # Parameter per_column_detection is used for training ISOLATION FOREST LOCAL OUTLIER FACTOR methods, as their main usage in analyzing multivariate data rather than univariates
@@ -169,8 +185,7 @@ def handle_outliers(data : pd.DataFrame, handle_outlier_method : HandleOutlierMe
 
     Returns:
         pd.DataFrame: DataFrame with outliers handled as specified.
-    """
-        
+    """ 
     # Display dataset info before and after imputation if verbose is enabled
     # If the outlier dict is empty, the output is the original data
     if len(outliers) == 0: return data
@@ -223,7 +238,6 @@ def visualize_outliers(original_data : pd.DataFrame, cleaned_data : pd.DataFrame
     Returns:
         None
     """
-        
     # Check if column_subset is valid
     observing_columns = _get_observing_columns(original_data, columns_subset)
     if len(observing_columns) == 0: return
