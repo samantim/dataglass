@@ -1,7 +1,47 @@
+"""
+Type Conversion Module
+=======================
+
+This module provides robust functionality for converting column datatypes in pandas DataFrames
+as part of a modular preprocessing pipeline. It supports both automatic inference and 
+user-defined conversion strategies to ensure that data types are clean, consistent, 
+and analysis-ready.
+
+Core Features:
+--------------
+1. **Automatic Datatype Conversion**
+   - Converts object-type columns to numeric where possible.
+   - If numeric conversion fails, attempts datetime conversion.
+   - Leaves columns unchanged if neither is applicable.
+
+2. **User-Defined Datatype Conversion**
+   - Allows precise control over datatype transformations via a structured scenario dictionary.
+   - Supports "int", "float", and "datetime" types, with optional format strings for datetime.
+   - Includes input validation and detailed error messaging for safe conversion.
+
+3. **Pipeline Integration**
+   - Implements the `TypeConversionStep` class conforming to the `PipelineStep` interface 
+     for streamlined integration into data preprocessing workflows.
+
+Enums:
+------
+- `ConvertDatatypeMethod`: Enum defining the conversion strategy (`AUTO`, `USER_DEFINED`).
+
+Functions:
+----------
+- `convert_datatype_auto`: Applies automatic datatype conversion to object-type columns.
+- `convert_datatype_userdefined`: Converts specified columns based on user-provided rules and formats.
+
+Classes:
+--------
+- `TypeConversionStep`: A pipeline-compatible class that applies either automatic or user-defined 
+  datatype conversions to a DataFrame.
+"""
 import pandas as pd
 from typing import Dict, List
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler, Normalizer
 from enum import Enum
+from ..pipeline.pipeline import PipelineStep
 
 
 class ScalingMethod(Enum):
@@ -37,7 +77,7 @@ def _get_observing_columns(data : pd.DataFrame, columns_subset : List) -> List:
     return observing_columns
 
 
-def scale_feature(data : pd.DataFrame, scale_scenario : Dict, apply_l2normalization : bool = False) -> pd.DataFrame:
+def scale_feature(data : pd.DataFrame, scaling_scenario : Dict, apply_l2normalization : bool = False) -> pd.DataFrame:
     """
     Applies specified scaling methods to given numeric columns and optionally applies L2 normalization.
 
@@ -61,20 +101,20 @@ def scale_feature(data : pd.DataFrame, scale_scenario : Dict, apply_l2normalizat
     # {"column":["High School Percentage", "Age"],
     #  "scaling_method":["ROBUST_SCALING", "ZSCORE_STANDARDIZATION"]}
 
-    if len(scale_scenario["column"]) != len(scale_scenario["scaling_method"]):
+    if len(scaling_scenario["column"]) != len(scaling_scenario["scaling_method"]):
         raise ValueError("Number of columns and scaling methods do not match!")
 
     # Check if column_subset is valid
-    observing_columns = _get_observing_columns(data, scale_scenario["column"])
+    observing_columns = _get_observing_columns(data, scaling_scenario["column"])
     if len(observing_columns) == 0: return data
 
-    scale_scenario["scaling_method"] = [sm.strip() for sm in scale_scenario["scaling_method"]]
+    scaling_scenario["scaling_method"] = [sm.strip() for sm in scaling_scenario["scaling_method"]]
     # Check all the provided scaling_method to be valid
-    if not all(sm in [c.name for c in list(ScalingMethod)] for sm in scale_scenario["scaling_method"]):
+    if not all(sm in [c.name for c in list(ScalingMethod)] for sm in scaling_scenario["scaling_method"]):
         raise ValueError("At least one of the scaling methods provided in the scenario is not valid! The only acceptable data types are: {MINMAX_SCALING, ZSCORE_STANDARDIZATION, ROBUST_SCALING}")
 
     # Create a list of tuples (column, scaling_method)
-    scale_scenario_zipped = list(zip(observing_columns,scale_scenario["scaling_method"]))
+    scale_scenario_zipped = list(zip(observing_columns,scaling_scenario["scaling_method"]))
 
     # For each column in the list, we apply the proper scaling method
     # Then update the date[column]
@@ -104,3 +144,43 @@ def scale_feature(data : pd.DataFrame, scale_scenario : Dict, apply_l2normalizat
             col_number += 1 
 
     return data
+
+
+class TypeConversionStep(PipelineStep):
+    """
+    Pipeline step for applying feature scaling and optional L2 normalization.
+
+    This class integrates with the DataPipeline system and enables users to define
+    column-specific scaling strategies using common methods such as MinMax, Z-Score,
+    and Robust scaling. It also supports optional L2 normalization applied across all
+    numeric features after initial scaling.
+
+    Parameters
+    ----------
+    scaling_scenario : Dict
+        A dictionary specifying the columns to be scaled and their associated methods.
+        Example:
+            {
+                "column": ["Age", "Income"],
+                "scaling_method": ["MINMAX_SCALING", "ZSCORE_STANDARDIZATION"]
+            }
+        Accepted methods are: "MINMAX_SCALING", "ZSCORE_STANDARDIZATION", "ROBUST_SCALING".
+
+    apply_l2normalization : bool, optional
+        If True, applies L2 normalization across all numeric columns after scaling.
+
+    verbose : bool, optional
+        If True, prints summary information before and after scaling (currently not implemented).
+    """
+    def __init__(self, 
+                scaling_scenario : Dict,
+                apply_l2normalization : bool = False,
+                verbose : bool = False
+                ):
+        
+        self.scaling_scenario = scaling_scenario
+        self.apply_l2normalization = apply_l2normalization
+        self.verbose = verbose
+
+    def apply(self, data : pd.DataFrame) -> pd.DataFrame:
+        return scale_feature(data, self.scaling_scenario, self.apply_l2normalization)

@@ -1,5 +1,56 @@
+"""
+Type Conversion Module
+=======================
+
+This module provides functionality for converting column datatypes in pandas DataFrames 
+as part of a modular data preprocessing pipeline. It includes automatic and user-defined 
+conversion strategies to ensure that data types are appropriate for downstream analysis 
+and modeling tasks.
+
+Core Features:
+--------------
+1. **Automatic Datatype Conversion**
+   - Attempts to convert object-type columns to numeric. If that fails, tries datetime conversion.
+   - Columns that cannot be converted remain unchanged.
+
+2. **User-Defined Datatype Conversion**
+   - Allows users to define a specific conversion scenario including column names, target data types 
+     (int, float, datetime), and optional datetime formats.
+   - Ensures accurate type transformation with validation and error handling.
+
+3. **Pipeline Integration**
+   - Includes the `TypeConversionStep` class, which implements the `PipelineStep` interface 
+     for seamless integration into preprocessing pipelines.
+
+Enums:
+------
+- `ConvertDatatypeMethod`: Defines strategies for datatype conversion (AUTO or USER_DEFINED).
+
+Functions:
+----------
+- `convert_datatype_auto`: Converts object-type columns to numeric or datetime using automatic inference.
+- `convert_datatype_userdefined`: Converts specified columns to target datatypes based on a provided scenario dictionary.
+
+Classes:
+--------
+- `TypeConversionStep`: A class implementing the `PipelineStep` interface for converting column datatypes 
+  within a data pipeline.
+"""
 import pandas as pd
 from typing import Dict
+from enum import Enum
+from ..pipeline.pipeline import PipelineStep
+
+class ConvertDatatypeMethod(Enum):
+    """
+    Enum for specifying the method to convert data types.
+
+    Attributes:
+        AUTO (int): Automatically infers and converts data types based on the input data.
+        USER_DEFINED (int): Converts data types based on user-provided convert scenario.
+    """
+    AUTO = 1
+    USER_DEFINED = 2
 
 
 def convert_datatype_auto(data : pd.DataFrame, verbose : bool = False) -> pd.DataFrame:
@@ -44,7 +95,7 @@ def convert_datatype_auto(data : pd.DataFrame, verbose : bool = False) -> pd.Dat
     return data    
 
 
-def convert_datatype_ud(data : pd.DataFrame, convert_scenario : Dict, verbose : bool = False) -> pd.DataFrame:
+def convert_datatype_userdefined(data : pd.DataFrame, convert_scenario : Dict, verbose : bool = False) -> pd.DataFrame:
     """
     Converts specific columns in a DataFrame to user-defined data types based on a provided scenario.
 
@@ -125,3 +176,43 @@ def convert_datatype_ud(data : pd.DataFrame, convert_scenario : Dict, verbose : 
         print(f"After automatic datatype conversion, the datatype are as follows:\n{data.dtypes}")
 
     return data
+
+
+class TypeConversionStep(PipelineStep):
+    """
+    Pipeline step for converting column datatypes using either automatic inference 
+    or user-defined rules.
+
+    This class integrates with the DataPipeline system and allows users to standardize
+    column types, which is critical for analysis and modeling. It supports:
+    - Automatic conversion of object-type columns to numeric or datetime.
+    - Manual conversion using user-defined column, type, and format specifications.
+
+    Parameters
+    ----------
+    convert_datatype_method : ConvertDatatypeMethod
+        Strategy for converting datatypes. Options: AUTO or USER_DEFINED.
+    convert_scenario : Dict
+        Required if `convert_datatype_method` is USER_DEFINED. Should include:
+            - "column": list of column names,
+            - "datatype": list of target datatypes ("int", "float", "datetime"),
+            - "format": list of datetime formats (use empty string for non-datetime).
+    verbose : bool, optional
+        If True, prints datatype information before and after conversion.
+    """
+    def __init__(self, 
+                convert_datatype_method : ConvertDatatypeMethod,
+                convert_scenario : Dict,
+                verbose : bool = False
+                ):
+        
+        self.convert_datatype_method = convert_datatype_method
+        self.convert_scenario = convert_scenario
+        self.verbose = verbose
+
+    def apply(self, data : pd.DataFrame) -> pd.DataFrame:
+        match self.convert_datatype_method:
+            case ConvertDatatypeMethod.AUTO:
+                return convert_datatype_auto(data, self.verbose)
+            case ConvertDatatypeMethod.USER_DEFINED:
+                return convert_datatype_userdefined(data, self.convert_scenario, self.verbose)

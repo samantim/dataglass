@@ -26,7 +26,9 @@ from .outlier_handling import (
 
 from .type_conversion import (
     convert_datatype_auto,
-    convert_datatype_ud
+    convert_datatype_userdefined,
+    TypeConversionStep,
+    ConvertDatatypeMethod
 )
 
 from .feature_encoding import (
@@ -37,6 +39,7 @@ from .feature_encoding import (
 
 from .feature_scaling import (
     scale_feature,
+    TypeConversionStep,
     ScalingMethod
 )
 
@@ -63,12 +66,15 @@ __all__ = [
     "HandleOutlierMethod",
     # type_conversion
     "convert_datatype_auto",
-    "convert_datatype_ud",
+    "convert_datatype_userdefined",
+    "TypeConversionStep",
+    "ConvertDatatypeMethod",
     # feature_encoding
     "encode_feature",
     "EncodeFeatureStep",
     "CategoricalEncodingMethod",
     # feature_scaling
     "scale_feature",
+    "TypeConversionStep",
     "ScalingMethod"
 ]
