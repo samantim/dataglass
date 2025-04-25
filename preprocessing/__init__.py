@@ -2,8 +2,10 @@ from .missing_handling import (
     handle_missing_values_drop,
     handle_missing_values_datatype_imputation,
     handle_missing_values_adjacent_value_imputation,
+    HandleMissingStep,
     NumericDatatypeImputationMethod,
-    AdjacentImputationMethod
+    AdjacentImputationMethod,
+    HandleMissingMethod
 )
 
 from .duplicate_handling import (
@@ -38,8 +40,10 @@ __all__ = [
     "handle_missing_values_drop",
     "handle_missing_values_datatype_imputation",
     "handle_missing_values_adjacent_value_imputation",
+    "HandleMissingStep",
     "NumericDatatypeImputationMethod",
     "AdjacentImputationMethod",
+    "HandleMissingMethod",
     # duplicate_handling
     "handle_duplicate_values_exact",
     "handle_duplicate_values_fuzzy",

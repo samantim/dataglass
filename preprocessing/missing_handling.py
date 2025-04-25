@@ -1,5 +1,14 @@
+"""
+This module provides functionality for handling missing values in pandas DataFrames
+as part of a modular data preprocessing pipeline. It includes different strategies
+for handling missing values including dropping, datatype-based imputation, and
+adjacent value imputation.
+
+The steps can be used independently or composed into a pipeline using the PipelineStep interface.
+"""
 import pandas as pd
 from enum import Enum
+from ..pipeline.pipeline import PipelineStep
 
 
 class AdjacentImputationMethod(Enum):
@@ -33,6 +42,24 @@ class NumericDatatypeImputationMethod(Enum):
     MEAN = 1
     MEDIAN = 2
     MODE = 3
+
+
+class HandleMissingMethod(Enum):
+    """
+    Enum for specifying the strategy to handle missing values in the dataset.
+
+    Attributes
+    ----------
+    DROP : int
+        Drop rows that contain missing values.
+    DATATYPE_IMPUTATION : int
+        Impute missing values based on column data types (mean/median/mode for numeric, mode for categorical).
+    ADJACENT_VALUE_IMPUTATION : int
+        Impute missing values using adjacent values (forward fill, backward fill, or interpolation).
+    """
+    DROP = 1
+    DATATYPE_IMPUTATION = 2
+    ADJACENT_VALUE_IMPUTATION = 3
 
 
 def handle_missing_values_drop(data: pd.DataFrame, verbose : bool = False) -> pd.DataFrame:
@@ -201,3 +228,56 @@ def handle_missing_values_adjacent_value_imputation(data: pd.DataFrame, adjacent
         print(f"Dataset has {data.shape[0]} rows after handling missing values.")
 
     return data
+
+
+class HandleMissingStep(PipelineStep):
+    """
+    Pipeline step for handling missing values using various strategies.
+
+    This class integrates with the DataPipeline system and allows users to choose 
+    how to handle missing values by either:
+    - Dropping rows with missing values.
+    - Imputing based on data type (mean, median, mode for numerics; mode for categoricals).
+    - Using adjacent values (forward fill, backward fill, linear and time-based interpolation).
+
+    Parameters
+    ----------
+    handle_missing_method : HandleMissingMethod
+        Strategy to use for handling missing values.
+    numeric_datatype_imputation_method : NumericDatatypeImputationMethod, optional
+        Required if `handle_missing_method` is DATATYPE_IMPUTATION. Specifies how to impute numeric columns.
+    adjacent_imputation_method : AdjacentImputationMethod, optional
+        Required if `handle_missing_method` is ADJACENT_VALUE_IMPUTATION. Specifies adjacent imputation method.
+    time_reference_col : str, optional
+        Required only for time-based interpolation. Column should be in datetime format.
+    verbose : bool, optional
+        If True, prints details about the imputation process.
+    """
+    def __init__(self, 
+                 handle_missing_method : HandleMissingMethod = HandleMissingMethod.DROP,
+                 numeric_datatype_imputation_method : NumericDatatypeImputationMethod = 0 | None,
+                 adjacent_imputation_method : AdjacentImputationMethod = 0 | None, 
+                 time_reference_col : str = "" | None,
+                 verbose : bool = False
+                ):
+        
+        self.handle_missing_method = handle_missing_method
+
+        if handle_missing_method == HandleMissingMethod.DATATYPE_IMPUTATION and not numeric_datatype_imputation_method:
+            raise ValueError("Numeric datatype imputation method must be selected in case of using DATATYPE_IMPUTATION as handling missing value.")
+        if handle_missing_method == HandleMissingMethod.ADJACENT_VALUE_IMPUTATION and not adjacent_imputation_method:
+            raise ValueError("Adjacent imputation method must be selected in case of using ADJACENT_VALUE_IMPUTATION as handling missing value.")
+        
+        self.numeric_datatype_imputation_method = numeric_datatype_imputation_method
+        self.adjacent_imputation_method = adjacent_imputation_method
+        self.time_reference_col = time_reference_col
+        self.verbose = verbose
+
+    def apply(self, data : pd.DataFrame) -> pd.DataFrame:
+        match self.handle_missing_method:
+            case HandleMissingMethod.DROP:
+                return handle_missing_values_drop(data, self.verbose)
+            case HandleMissingMethod.DATATYPE_IMPUTATION:
+                return handle_missing_values_datatype_imputation(data, self.numeric_datatype_imputation_method, self.verbose)
+            case HandleMissingMethod.ADJACENT_VALUE_IMPUTATION:
+                return handle_missing_values_adjacent_value_imputation(data, self.adjacent_imputation_method, self.time_reference_col, self.verbose)
