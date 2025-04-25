@@ -1,10 +1,44 @@
 """
-This module provides functionality for handling missing values in pandas DataFrames
-as part of a modular data preprocessing pipeline. It includes different strategies
-for handling missing values including dropping, datatype-based imputation, and
-adjacent value imputation.
+Missing Values Handling Module
+===============================
 
-The steps can be used independently or composed into a pipeline using the PipelineStep interface.
+This module provides functionality for handling missing values in pandas DataFrames 
+as part of a modular data preprocessing pipeline. It includes multiple strategies 
+for handling missing values, including dropping rows, imputing based on data types, 
+and imputing using adjacent values.
+
+Core Features:
+--------------
+1. **Drop Missing Values**
+   - Drops all rows containing missing values from the DataFrame.
+
+2. **Datatype-Based Imputation**
+   - Imputes missing values in numeric columns using the specified method (mean, median, or mode).
+   - Imputes missing values in categorical columns using the mode (most frequent value).
+
+3. **Adjacent Value Imputation**
+   - Imputes missing values based on adjacent values, such as forward fill, backward fill, linear interpolation, 
+     or time-based interpolation (when a datetime column is provided).
+
+4. **Pipeline Integration**
+   - Includes the `HandleMissingStep` class, which implements the `PipelineStep` interface for seamless integration 
+     into preprocessing pipelines.
+
+Enums:
+------
+- `AdjacentImputationMethod`: Defines imputation methods for filling missing values using adjacent data.
+- `NumericDatatypeImputationMethod`: Specifies imputation methods for numeric columns (mean, median, mode).
+- `HandleMissingMethod`: Defines strategies for handling missing values (drop, datatype imputation, or adjacent imputation).
+
+Functions:
+----------
+- `handle_missing_values_drop`: Drops rows with missing values from the DataFrame.
+- `handle_missing_values_datatype_imputation`: Imputes missing values based on column data types (numeric or categorical).
+- `handle_missing_values_adjacent_value_imputation`: Imputes missing values using adjacent values (forward fill, backward fill, interpolation).
+
+Classes:
+--------
+- `HandleMissingStep`: A class implementing the `PipelineStep` interface for handling missing values within a data pipeline.
 """
 import pandas as pd
 from enum import Enum
@@ -16,8 +50,8 @@ class AdjacentImputationMethod(Enum):
     Enum for specifying the method to impute missing values based on adjacent data.
 
     Attributes:
-        FORWARD (int): Forward fill – propagates last valid observation forward.
-        BACKWARD (int): Backward fill – uses next valid observation to fill missing values.
+        FORWARD (int): Forward fill - propagates last valid observation forward.
+        BACKWARD (int): Backward fill - uses next valid observation to fill missing values.
         INTERPOLATION_LINEAR (int): Linearly interpolates missing values.
         INTERPOLATION_TIME (int): Interpolates missing values assuming the index is time-based.
     """
@@ -254,11 +288,11 @@ class HandleMissingStep(PipelineStep):
         If True, prints details about the imputation process.
     """
     def __init__(self, 
-                 handle_missing_method : HandleMissingMethod = HandleMissingMethod.DROP,
-                 numeric_datatype_imputation_method : NumericDatatypeImputationMethod = 0 | None,
-                 adjacent_imputation_method : AdjacentImputationMethod = 0 | None, 
-                 time_reference_col : str = "" | None,
-                 verbose : bool = False
+                handle_missing_method : HandleMissingMethod = HandleMissingMethod.DROP,
+                numeric_datatype_imputation_method : NumericDatatypeImputationMethod = 0 | None,
+                adjacent_imputation_method : AdjacentImputationMethod = 0 | None, 
+                time_reference_col : str = "" | None,
+                verbose : bool = False
                 ):
         
         self.handle_missing_method = handle_missing_method

@@ -10,12 +10,16 @@ from .missing_handling import (
 
 from .duplicate_handling import (
     handle_duplicate_values_exact,
-    handle_duplicate_values_fuzzy
+    handle_duplicate_values_fuzzy,
+    HandleDuplicateStep,
+    HandleDuplicateMethod
 )
 
 from .outlier_handling import (
     detect_outliers,
     handle_outliers,
+    visualize_outliers,
+    HandleOutlierStep,
     DetectOutlierMethod,
     HandleOutlierMethod
 )
@@ -26,7 +30,8 @@ from .type_conversion import (
 )
 
 from .feature_encoding import (
-    encode_categorical,
+    encode_feature,
+    EncodeFeatureStep,
     CategoricalEncodingMethod
 )
 
@@ -47,16 +52,21 @@ __all__ = [
     # duplicate_handling
     "handle_duplicate_values_exact",
     "handle_duplicate_values_fuzzy",
+    "HandleDuplicateStep",
+    "HandleDuplicateMethod",
     # outlier_handling
     "detect_outliers",
     "handle_outliers",
+    "visualize_outliers",
+    "HandleOutlierStep",
     "DetectOutlierMethod",
     "HandleOutlierMethod",
     # type_conversion
     "convert_datatype_auto",
     "convert_datatype_ud",
     # feature_encoding
-    "encode_categorical",
+    "encode_feature",
+    "EncodeFeatureStep",
     "CategoricalEncodingMethod",
     # feature_scaling
     "scale_feature",

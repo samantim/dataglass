@@ -1,9 +1,56 @@
+"""
+Duplicate Handling Module
+==========================
+
+This module provides functionality for detecting and removing duplicate rows in pandas DataFrames 
+as part of a modular data preprocessing pipeline. It supports both exact and fuzzy duplicate detection 
+based on a similarity threshold.
+
+Core Features:
+--------------
+1. **Exact Duplicate Removal**
+   - Identifies and removes fully identical rows using pandas' built-in `drop_duplicates` method.
+
+2. **Fuzzy Duplicate Removal**
+   - Detects and removes near-duplicate rows based on a similarity threshold using the RapidFuzz library.
+   - Compares text columns and retains only the most representative entry per group of similar rows.
+
+3. **Pipeline Integration**
+   - Includes the `HandleDuplicatesStep` class, which implements the `PipelineStep` interface for seamless integration 
+     into preprocessing pipelines.
+
+Enums:
+------
+- `HandleDuplicateMethod`: Defines handle duplicate method. It has `EXACT` and `FUZZY` modes.
+
+Functions:
+----------
+- `handle_duplicates_exact`: Removes exact duplicate rows from the DataFrame.
+- `handle_duplicates_fuzzy`: Identifies and removes fuzzy duplicates based on string similarity.
+
+Classes:
+--------
+- `HandleDuplicateStep`: A class implementing the `PipelineStep` interface for handling duplicates within a data pipeline.
+"""
 import pandas as pd
 import numpy as np
 from typing import List, Tuple
 from rapidfuzz import fuzz
 from itertools import combinations
+from enum import Enum
+from ..pipeline.pipeline import PipelineStep
 
+class HandleDuplicateMethod(Enum):
+    """
+    Enumeration of methods to handle duplicate values in a dataset.
+
+    Attributes
+    ----------
+    EXACT : Identifies and removes exact duplicates.
+    FUZZY : Identifies and removes approximate (fuzzy) duplicates based on string similarity.
+    """
+    EXACT = 1
+    FUZZY = 2
 
 def handle_duplicate_values_exact(data : pd.DataFrame, subset : List = None, verbose : bool = False) -> pd.DataFrame:
     """
@@ -187,3 +234,47 @@ def handle_duplicate_values_fuzzy(data : pd.DataFrame, subset : List = None, sim
         print(f"Dataset has {data.shape[0]} rows after handling duplicate values.")
 
     return data
+
+
+class HandleDuplicateStep(PipelineStep):
+    """
+    A pipeline step for handling duplicate values in a DataFrame.
+
+    This step supports both exact and fuzzy duplicate removal, depending on the specified method.
+
+    Parameters
+    ----------
+    handle_duplicate_method : HandleDuplicateMethod
+        The method to use for detecting and removing duplicates (EXACT or FUZZY).
+    subset : list of str, optional
+        Column names to consider when identifying duplicates.
+        If None, all columns are considered.
+    similarity_thresholds : tuple of int, optional
+        For fuzzy duplicate detection, a tuple (min, max) defining the average similarity threshold between rows.
+        Only used when `handle_duplicate_method` is FUZZY.
+    verbose : bool, default=False
+        If True, prints details before and after handling duplicates.
+
+    Methods
+    -------
+    apply(data: pd.DataFrame) -> pd.DataFrame
+        Applies the selected duplicate handling method to the DataFrame.
+    """
+    def __init__(self, 
+                handle_duplicate_method : HandleDuplicateMethod,
+                subset : List = None,
+                similarity_thresholds : Tuple = None, 
+                verbose : bool = False
+                ):
+        self.handle_duplicate_method = handle_duplicate_method
+        self.subset = subset
+        self.similarity_thresholds = similarity_thresholds
+        self.verbose = verbose
+
+    def apply(self, data : pd.DataFrame) -> pd.DataFrame:
+        match self.handle_duplicate_method:
+            case HandleDuplicateMethod.EXACT:
+                return handle_duplicate_values_exact(data, self.subset, self.verbose)
+            case HandleDuplicateMethod.FUZZY:
+                return handle_duplicate_values_fuzzy(data, self.subset, self.similarity_thresholds, self.verbose)
+                

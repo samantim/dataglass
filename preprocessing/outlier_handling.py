@@ -1,3 +1,49 @@
+"""
+Outlier Detection and Handling Module
+======================================
+
+This module provides robust functionality for detecting and handling outliers in pandas DataFrames. 
+It supports both statistical and machine learning-based outlier detection methods, as well as multiple 
+strategies for managing the detected outliers. The module is designed for integration into modular data 
+preprocessing pipelines.
+
+Core Features:
+--------------
+1. **Outlier Detection Methods**
+   - IQR (Interquartile Range): Identifies outliers based on spread between Q1 and Q3.
+   - Z-Score: Detects outliers as data points more than 3 standard deviations from the mean.
+   - Isolation Forest: Tree-based method for identifying anomalies using an ensemble model.
+   - Local Outlier Factor (LOF): Density-based method for identifying local anomalies.
+
+2. **Flexible Scope**
+   - Detect outliers across all numeric columns or a specified subset.
+   - Support for both per-column and multivariate detection when using Isolation Forest and LOF.
+
+3. **Outlier Handling Strategies**
+   - Drop: Removes rows containing outliers.
+   - Replace with Median: Substitutes outlier values with column medians.
+   - Cap with Boundaries: Caps outliers to lower and upper inlier boundaries.
+
+4. **Boundary Tracking**
+   - For each column, stores the calculated inlier range to facilitate boundary capping or visualization.
+
+5. **Pipeline Integration**
+   - Ready to be used as part of a custom preprocessing pipeline by implementing the `PipelineStep` interface.
+
+Enums:
+------
+- `DetectOutlierMethod`: Specifies the method used to detect outliers (IQR, Z-Score, Isolation Forest, LOF).
+- `HandleOutlierMethod`: Defines how detected outliers should be handled (Drop, Replace with Median, Cap with Boundaries).
+
+Functions:
+----------
+- `detect_outliers`: Detects outliers using the selected method and returns their indices and inlier boundaries.
+- `handle_outliers`: Applies the selected strategy to handle detected outliers in the dataset.
+
+Classes:
+--------
+- `HandleOutliergStep`: A class implementing the `PipelineStep` interface for handling outlier values within a data pipeline.
+"""
 import pandas as pd
 from enum import Enum
 from os import path, makedirs
@@ -6,6 +52,7 @@ from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
 import matplotlib.pyplot as plt
 import seaborn as sns
+from ..pipeline.pipeline import PipelineStep
 
 class DetectOutlierMethod(Enum):
     """
@@ -76,7 +123,7 @@ def detect_outliers(data : pd.DataFrame, detect_outlier_method : DetectOutlierMe
     Raises:
         ValueError: If parameters are invalid.
     """
-    # Parameter contamination_rate is used for training ISOLATION FOREST LOCAL OUTLIER FACTOR methods to set the boundries for outliers
+    # Parameter contamination_rate is used for training ISOLATION FOREST LOCAL OUTLIER FACTOR methods to set the boundaries for outliers
     # Parameter n_neighbors is used for training OUTLIER FACTOR methods to set the number of observing neighbors
     # Parameter per_column_detection is used for training ISOLATION FOREST LOCAL OUTLIER FACTOR methods, as their main usage in analyzing multivariate data rather than univariates
     # but in case of comparison, I include both per-column and all-columns approaches for these methods
@@ -95,7 +142,7 @@ def detect_outliers(data : pd.DataFrame, detect_outlier_method : DetectOutlierMe
             raise ValueError("The 'contamination' parameter of IsolationForest must be a str among {'auto'} or a float in the range (0.0, 0.5]")
         
     outliers = {}
-    boundries = {}
+    boundaries = {}
     # Check detecting method and run the following block
     match detect_outlier_method:
         case DetectOutlierMethod.IQR:
@@ -106,7 +153,7 @@ def detect_outliers(data : pd.DataFrame, detect_outlier_method : DetectOutlierMe
                 IQR = Q3 - Q1
                 # Extract outliers based on IQR method
                 outliers[col] = data.loc[(data[col] < Q1 - 1.5 * IQR) | (data[col] > Q3 + 1.5 * IQR)].index.to_list()
-                boundries[col] = (Q1 - 1.5 * IQR, Q3 + 1.5 * IQR)
+                boundaries[col] = (Q1 - 1.5 * IQR, Q3 + 1.5 * IQR)
 
         case DetectOutlierMethod.ZSCORE:
             for col in observing_columns:
@@ -116,7 +163,7 @@ def detect_outliers(data : pd.DataFrame, detect_outlier_method : DetectOutlierMe
                 # Extract outliers based on Z-Score method
                 # Z-Score = (data - mean)/std  -->  to be inlier  -->  -3 < Z-Score < 3
                 outliers[col] = data.loc[(data[col] < mean - 3 * std) | (data[col] > mean + 3 * std)].index.to_list()
-                boundries[col] = (mean - 3 * std, mean + 3 * std)
+                boundaries[col] = (mean - 3 * std, mean + 3 * std)
 
         case DetectOutlierMethod.ISOLATION_FOREST:
             if per_column_detection:
@@ -127,9 +174,9 @@ def detect_outliers(data : pd.DataFrame, detect_outlier_method : DetectOutlierMe
                     predictions = isolation_forest.fit_predict(data[[col]])
                     # if the prediction == -1 means it is an outlier
                     outliers[col] = data[predictions == -1].index.to_list()
-                    # Isolation forest method, rather than IQR and Z-Score, does not have native boundries. So, we use the min and max value of inliers for that
+                    # Isolation forest method, rather than IQR and Z-Score, does not have native boundaries. So, we use the min and max value of inliers for that
                     inliers = data.loc[~data.index.isin(outliers[col]), col]
-                    boundries[col] = (inliers.min(), inliers.max())
+                    boundaries[col] = (inliers.min(), inliers.max())
             else:
                 # Create an object of the IsolationForest class, then train it and get the predictions based on the contamination_rate
                 isolation_forest = IsolationForest(contamination=contamination_rate, random_state=42)
@@ -139,9 +186,9 @@ def detect_outliers(data : pd.DataFrame, detect_outlier_method : DetectOutlierMe
                 outliers_indexes = data[predictions == -1].index.to_list()
                 for col in observing_columns:
                     outliers[col] = outliers_indexes
-                    # Isolation forest method, rather than IQR and Z-Score, does not have native boundries. So, we use the min and max value of inliers for that
+                    # Isolation forest method, rather than IQR and Z-Score, does not have native boundaries. So, we use the min and max value of inliers for that
                     inliers = data.loc[~data.index.isin(outliers[col]), col]
-                    boundries[col] = (inliers.min(), inliers.max())
+                    boundaries[col] = (inliers.min(), inliers.max())
 
         case DetectOutlierMethod.LOCAL_OUTLIER_FACTOR:
             if per_column_detection:
@@ -152,9 +199,9 @@ def detect_outliers(data : pd.DataFrame, detect_outlier_method : DetectOutlierMe
                     predictions = local_outlier_factor.fit_predict(data[[col]])
                     # if the prediction == -1 means it is an outlier
                     outliers[col] = data[predictions == -1].index.to_list()
-                    # Local outlier factor method, rather than IQR and Z-Score, does not have native boundries. So, we use the min and max value of inliers for that
+                    # Local outlier factor method, rather than IQR and Z-Score, does not have native boundaries. So, we use the min and max value of inliers for that
                     inliers = data.loc[~data.index.isin(outliers[col]), col]
-                    boundries[col] = (inliers.min(), inliers.max())
+                    boundaries[col] = (inliers.min(), inliers.max())
             else:
                 # Create an object of the LocalOutlierFactor class, then train it and get the predictions based on the contamination_rate and n_neighbors
                 local_outlier_factor = LocalOutlierFactor(contamination=contamination_rate, n_neighbors=n_neighbors)
@@ -164,15 +211,15 @@ def detect_outliers(data : pd.DataFrame, detect_outlier_method : DetectOutlierMe
                 outliers_indexes = data[predictions == -1].index.to_list()
                 for col in observing_columns:
                     outliers[col] = outliers_indexes
-                    # Local outlier factor method, rather than IQR and Z-Score, does not have native boundries. So, we use the min and max value of inliers for that
+                    # Local outlier factor method, rather than IQR and Z-Score, does not have native boundaries. So, we use the min and max value of inliers for that
                     inliers = data.loc[~data.index.isin(outliers[col]), col]
-                    boundries[col] = (inliers.min(), inliers.max())
+                    boundaries[col] = (inliers.min(), inliers.max())
 
-    # Output of the function is a Tuple consists of oulier indexes dict and boundries on inliers dict
-    return outliers, boundries
+    # Output of the function is a Tuple consists of oulier indexes dict and boundaries on inliers dict
+    return outliers, boundaries
 
 
-def handle_outliers(data : pd.DataFrame, handle_outlier_method : HandleOutlierMethod, outliers : Dict = {}, boundries : Dict = {}, verbose : bool = False) -> pd.DataFrame:
+def handle_outliers(data : pd.DataFrame, handle_outlier_method : HandleOutlierMethod, outliers : Dict = {}, boundaries : Dict = {}, verbose : bool = False) -> pd.DataFrame:
     """
     Handles the detected outliers in the DataFrame using the selected strategy.
 
@@ -180,7 +227,7 @@ def handle_outliers(data : pd.DataFrame, handle_outlier_method : HandleOutlierMe
         data (pd.DataFrame): The input DataFrame.
         handle_outlier_method (HandleOutlierMethod): Strategy to handle outliers.
         outliers (Dict): Dictionary of detected outlier indices per column.
-        boundries (Dict): Boundaries used to clip outliers if needed.
+        boundaries (Dict): Boundaries used to clip outliers if needed.
         verbose (bool): If True, prints dataset stats before and after handling.
 
     Returns:
@@ -209,8 +256,8 @@ def handle_outliers(data : pd.DataFrame, handle_outlier_method : HandleOutlierMe
         case HandleOutlierMethod.CAP_WITH_BOUNDARIES:
             for col in outliers.keys(): 
                 # For each column which has outliers, all the outliers cap (clip) with boundry values of that column
-                lower, upper = boundries[col]
-                # If the boundries are float, the column type should be converted to float (implicit casting is deprecated)
+                lower, upper = boundaries[col]
+                # If the boundaries are float, the column type should be converted to float (implicit casting is deprecated)
                 # "isinstance" is safer than "type", since it also include numpy types
                 if isinstance(lower, float) or isinstance(upper, float):
                     data[col] = data[col].astype(float)
@@ -272,3 +319,59 @@ def visualize_outliers(original_data : pd.DataFrame, cleaned_data : pd.DataFrame
         plt.clf()
         
     plt.close()
+
+
+class HandleOutlierStep(PipelineStep):
+    """
+    Pipeline step for detecting and handling outliers using various strategies.
+
+    This class integrates with the DataPipeline system and allows users to detect 
+    and handle outliers in a DataFrame by:
+    - Identifying outliers using methods like IQR, Z-Score, Isolation Forest, or Local Outlier Factor (LOF).
+    - Handling detected outliers by either dropping them, replacing them with the median, 
+      or capping them within calculated boundaries.
+
+    Parameters
+    ----------
+    detect_outlier_method : DetectOutlierMethod
+        Method to use for detecting outliers (e.g., IQR, Z-Score, Isolation Forest, LOF).
+    
+    handle_outlier_method : HandleOutlierMethod
+        Strategy to use for handling the detected outliers (drop, replace, or cap).
+
+    columns_subset : List, optional
+        List of numeric columns to check for outliers. If None, all numeric columns are considered.
+
+    contamination_rate : float or str, optional
+        Proportion of outliers in the data. Used by Isolation Forest and LOF. Can be a float or "auto".
+
+    n_neighbors : int, optional
+        Number of neighbors used for the LOF algorithm. Default is 20.
+
+    per_column_detection : bool, optional
+        If True, detects outliers on a per-column basis. If False, uses multivariate detection.
+
+    verbose : bool, optional
+        If True, prints details about the outlier detection and handling process.
+    """
+    def __init__(self, 
+                detect_outlier_method : DetectOutlierMethod,
+                handle_outlier_method : HandleOutlierMethod,
+                columns_subset : List = None,
+                contamination_rate : float | str = "auto",
+                n_neighbors : int = 20,
+                per_column_detection : bool = True,
+                verbose : bool = False
+                ):
+    
+        self.detect_outlier_method = detect_outlier_method
+        self.handle_outlier_method = handle_outlier_method
+        self.columns_subset = columns_subset
+        self.contamination_rate = contamination_rate
+        self.n_neighbors = n_neighbors
+        self.per_column_detection = per_column_detection
+        self.verbose = verbose
+
+    def apply(self, data : pd.DataFrame) -> pd.DataFrame:
+        _outliers, _boundaries = detect_outliers(data, self.detect_outlier_method, self.columns_subset, self.contamination_rate, self.n_neighbors, self.per_column_detection)
+        return handle_outliers(data, self.handle_outlier_method, _outliers, _boundaries,self.verbose)

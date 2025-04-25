@@ -1,3 +1,43 @@
+"""
+Categorical Encoding Module
+============================
+
+This module provides functionality for encoding categorical variables in pandas DataFrames 
+as part of a modular data preprocessing pipeline. It includes multiple strategies 
+for encoding non-numeric features to prepare data for machine learning algorithms.
+
+Core Features:
+--------------
+1. **Label Encoding**
+   - Encodes categorical values as integers using `LabelEncoder` from scikit-learn.
+   - Appends new encoded columns to the DataFrame with the suffix `_encoded`.
+
+2. **One-Hot Encoding**
+   - Converts categorical variables into binary vectors using `OneHotEncoder` from scikit-learn.
+   - Creates new columns for each category with descriptive names.
+
+3. **Hashing Encoding**
+   - Uses the hashing trick to encode high-cardinality categorical features via `HashingEncoder` from the `category_encoders` library.
+   - Automatically calculates the number of components based on the number of unique categories to balance between performance and collisions.
+   - Emits a warning when used on low-cardinality columns (less than 10 categories).
+
+4. **Pipeline Integration**
+   - Includes the `EncodeCategoricalStep` class, which implements the `PipelineStep` interface for seamless integration 
+     into preprocessing pipelines.
+
+Enums:
+------
+- `CategoricalEncodingMethod`: Defines strategies for encoding categorical values, including label, one-hot, and hashing encoding.
+
+Functions:
+----------
+- `encode_categorical`: Encodes categorical columns using the specified encoding strategy. Automatically determines 
+  applicable columns or uses a provided subset. Encoded columns are appended to the original DataFrame.
+
+Classes:
+--------
+- `EncodeCategoricalStep`: A class implementing the `PipelineStep` interface for encoding categorical variables within a data pipeline.
+"""
 import pandas as pd
 from typing import List
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
@@ -5,6 +45,7 @@ import category_encoders as ce
 from enum import Enum
 from math import log2, ceil
 import warnings
+from ..pipeline.pipeline import PipelineStep
 
 class CategoricalEncodingMethod(Enum):
     """
@@ -40,7 +81,7 @@ def _get_observing_columns(data : pd.DataFrame, columns_subset : List) -> List:
     return observing_columns 
 
 
-def encode_categorical(data : pd.DataFrame, categorical_encoding_method : CategoricalEncodingMethod, columns_subset : List = None) -> pd.DataFrame:
+def encode_feature(data : pd.DataFrame, categorical_encoding_method : CategoricalEncodingMethod, columns_subset : List = None) -> pd.DataFrame:
     """
     Encodes categorical columns using the specified encoding method.
 
@@ -95,3 +136,37 @@ def encode_categorical(data : pd.DataFrame, categorical_encoding_method : Catego
                 data = pd.concat([data, encoded_columns], axis=1)
 
     return data
+
+
+class EncodeFeatureStep(PipelineStep):
+    """
+    Pipeline step for encoding categorical variables using various encoding strategies.
+
+    This class integrates with the DataPipeline system and allows users to apply a selected 
+    encoding method to categorical columns. It supports applying the encoding either to all 
+    categorical columns or a specified subset.
+
+    Parameters
+    ----------
+    categorical_encoding_method : CategoricalEncodingMethod
+        Strategy to use for encoding categorical features (e.g., OneHot, Ordinal, Binary).
+    
+    columns_subset : List, optional
+        A list of column names to apply encoding to. If None, the encoding is applied to all 
+        categorical columns detected in the DataFrame.
+
+    verbose : bool, optional
+        If True, prints details about the encoding process.
+    """
+    def __init__(self, 
+                categorical_encoding_method : CategoricalEncodingMethod,
+                columns_subset : List = None,
+                verbose : bool = False
+                ):
+        
+        self.categorical_encoding_method = categorical_encoding_method
+        self.columns_subset = columns_subset
+        self.verbose = verbose
+
+    def apply(self, data : pd.DataFrame) -> pd.DataFrame:
+        return encode_feature(data, self.categorical_encoding_method, self.columns_subset)
