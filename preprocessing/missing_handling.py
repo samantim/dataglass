@@ -42,7 +42,7 @@ Classes:
 """
 import pandas as pd
 from enum import Enum
-from ..pipeline.pipeline import PipelineStep
+from ..pipeline.pipeline import _PipelineStep
 
 
 class AdjacentImputationMethod(Enum):
@@ -264,7 +264,7 @@ def handle_missing_values_adjacent_value_imputation(data: pd.DataFrame, adjacent
     return data
 
 
-class HandleMissingStep(PipelineStep):
+class HandleMissingStep(_PipelineStep):
     """
     Pipeline step for handling missing values using various strategies.
 
@@ -289,9 +289,9 @@ class HandleMissingStep(PipelineStep):
     """
     def __init__(self, 
                 handle_missing_method : HandleMissingMethod = HandleMissingMethod.DROP,
-                numeric_datatype_imputation_method : NumericDatatypeImputationMethod = 0 | None,
-                adjacent_imputation_method : AdjacentImputationMethod = 0 | None, 
-                time_reference_col : str = "" | None,
+                numeric_datatype_imputation_method : NumericDatatypeImputationMethod = 0,
+                adjacent_imputation_method : AdjacentImputationMethod = 0 , 
+                time_reference_col : str = "",
                 verbose : bool = False
                 ):
         

@@ -41,7 +41,7 @@ import pandas as pd
 from typing import Dict, List
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler, Normalizer
 from enum import Enum
-from ..pipeline.pipeline import PipelineStep
+from ..pipeline.pipeline import _PipelineStep
 
 
 class ScalingMethod(Enum):
@@ -146,7 +146,7 @@ def scale_feature(data : pd.DataFrame, scaling_scenario : Dict, apply_l2normaliz
     return data
 
 
-class TypeConversionStep(PipelineStep):
+class TypeConversionStep(_PipelineStep):
     """
     Pipeline step for applying feature scaling and optional L2 normalization.
 

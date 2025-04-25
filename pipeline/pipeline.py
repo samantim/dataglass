@@ -18,7 +18,7 @@ from abc import ABC, abstractmethod
 import pandas as pd
 from typing import List
 
-class PipelineStep(ABC):
+class _PipelineStep(ABC):
     """
     Abstract base class for all data preprocessing pipeline steps.
 
@@ -48,7 +48,7 @@ class DataPipeline():
     apply(data: pd.DataFrame) -> pd.DataFrame
         Applies all the steps sequentially to the input DataFrame and returns the transformed data.
     """
-    def __init__(self, steps : List[PipelineStep]):
+    def __init__(self, steps : List[_PipelineStep]):
         self.steps = steps
 
     def apply(self, data : pd.DataFrame) -> pd.DataFrame:

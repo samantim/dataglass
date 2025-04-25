@@ -45,7 +45,7 @@ import category_encoders as ce
 from enum import Enum
 from math import log2, ceil
 import warnings
-from ..pipeline.pipeline import PipelineStep
+from ..pipeline.pipeline import _PipelineStep
 
 class CategoricalEncodingMethod(Enum):
     """
@@ -138,7 +138,7 @@ def encode_feature(data : pd.DataFrame, categorical_encoding_method : Categorica
     return data
 
 
-class EncodeFeatureStep(PipelineStep):
+class EncodeFeatureStep(_PipelineStep):
     """
     Pipeline step for encoding categorical variables using various encoding strategies.
 

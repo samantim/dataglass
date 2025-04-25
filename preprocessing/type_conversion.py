@@ -39,7 +39,7 @@ Classes:
 import pandas as pd
 from typing import Dict
 from enum import Enum
-from ..pipeline.pipeline import PipelineStep
+from ..pipeline.pipeline import _PipelineStep
 
 class ConvertDatatypeMethod(Enum):
     """
@@ -178,7 +178,7 @@ def convert_datatype_userdefined(data : pd.DataFrame, convert_scenario : Dict, v
     return data
 
 
-class TypeConversionStep(PipelineStep):
+class TypeConversionStep(_PipelineStep):
     """
     Pipeline step for converting column datatypes using either automatic inference 
     or user-defined rules.

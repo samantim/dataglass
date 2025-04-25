@@ -52,7 +52,7 @@ from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
 import matplotlib.pyplot as plt
 import seaborn as sns
-from ..pipeline.pipeline import PipelineStep
+from ..pipeline.pipeline import _PipelineStep
 
 class DetectOutlierMethod(Enum):
     """
@@ -321,7 +321,7 @@ def visualize_outliers(original_data : pd.DataFrame, cleaned_data : pd.DataFrame
     plt.close()
 
 
-class HandleOutlierStep(PipelineStep):
+class HandleOutlierStep(_PipelineStep):
     """
     Pipeline step for detecting and handling outliers using various strategies.
 

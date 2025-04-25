@@ -38,7 +38,7 @@ from typing import List, Tuple
 from rapidfuzz import fuzz
 from itertools import combinations
 from enum import Enum
-from ..pipeline.pipeline import PipelineStep
+from ..pipeline.pipeline import _PipelineStep
 
 class HandleDuplicateMethod(Enum):
     """
@@ -236,7 +236,7 @@ def handle_duplicate_values_fuzzy(data : pd.DataFrame, subset : List = None, sim
     return data
 
 
-class HandleDuplicateStep(PipelineStep):
+class HandleDuplicateStep(_PipelineStep):
     """
     A pipeline step for handling duplicate values in a DataFrame.
 
