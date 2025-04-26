@@ -146,8 +146,13 @@ def handle_missing_values_datatype_imputation(data : pd.DataFrame, numeric_datat
     -------
     pd.DataFrame
         DataFrame with missing values imputed.
+    
+    Raises
+    ------
+    ValueError
+        if Numeric datatype imputation method is not valid.
     """
-
+    
     result = data.copy(deep=False)
 
     # Display dataset info before and after imputation if verbose is enabled
@@ -206,6 +211,9 @@ def handle_missing_values_adjacent_value_imputation(data: pd.DataFrame, adjacent
     ------
     ValueError
         If the time reference column is missing or not in a valid datetime format when using time-based interpolation.
+        if Adjacent imputation method is not valid.
+    KeyError
+        If the time reference column is not a valid column name.
     """
     # Display dataset info before and after imputation if verbose is enabled
     # Check for missing values
