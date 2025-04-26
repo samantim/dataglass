@@ -1,5 +1,5 @@
 """
-Categorical Encoding Module
+Feature Encoding Module
 ============================
 
 This module provides functionality for encoding categorical variables in pandas DataFrames 
@@ -22,21 +22,21 @@ Core Features:
    - Emits a warning when used on low-cardinality columns (less than 10 categories).
 
 4. **Pipeline Integration**
-   - Includes the `EncodeCategoricalStep` class, which implements the `PipelineStep` interface for seamless integration 
+   - Includes the `EncodeFeatureStep` class, which implements the `PipelineStep` interface for seamless integration 
      into preprocessing pipelines.
 
 Enums:
 ------
-- `CategoricalEncodingMethod`: Defines strategies for encoding categorical values, including label, one-hot, and hashing encoding.
+- `FeatureEncodingMethod`: Defines strategies for encoding categorical values, including label, one-hot, and hashing encoding.
 
 Functions:
 ----------
-- `encode_categorical`: Encodes categorical columns using the specified encoding strategy. Automatically determines 
+- `encode_feature`: Encodes categorical columns using the specified encoding strategy. Automatically determines 
   applicable columns or uses a provided subset. Encoded columns are appended to the original DataFrame.
 
 Classes:
 --------
-- `EncodeCategoricalStep`: A class implementing the `PipelineStep` interface for encoding categorical variables within a data pipeline.
+- `EncodeFeatureStep`: A class implementing the `PipelineStep` interface for encoding categorical variables within a data pipeline.
 """
 import pandas as pd
 from typing import List
@@ -47,9 +47,9 @@ from math import log2, ceil
 import warnings
 from ..pipeline.pipeline import _PipelineStep
 
-class CategoricalEncodingMethod(Enum):
+class FeatureEncodingMethod(Enum):
     """
-    Enumeration of categorical encoding methods.
+    Enumeration of feature encoding methods.
 
     Options:
         LABEL_ENCODING (int): Encodes categories as integers.
@@ -81,13 +81,13 @@ def _get_observing_columns(data : pd.DataFrame, columns_subset : List) -> List:
     return observing_columns 
 
 
-def encode_feature(data : pd.DataFrame, categorical_encoding_method : CategoricalEncodingMethod, columns_subset : List = None) -> pd.DataFrame:
+def encode_feature(data : pd.DataFrame, feature_encoding_method : FeatureEncodingMethod, columns_subset : List = None) -> pd.DataFrame:
     """
     Encodes categorical columns using the specified encoding method.
 
     Args:
         data (pd.DataFrame): Input DataFrame.
-        categorical_encoding_method (CategoricalEncodingMethod): Encoding method to apply. Options: LABEL_ENCODING, ONEHOT_ENCODING, HASHING.
+        feature_encoding_method (FeatureEncodingMethod): Encoding method to apply. Options: LABEL_ENCODING, ONEHOT_ENCODING, HASHING.
         columns_subset (List, optional): List of categorical columns to encode. If None, all non-numeric columns are used.
 
     Returns:
@@ -97,15 +97,15 @@ def encode_feature(data : pd.DataFrame, categorical_encoding_method : Categorica
     observing_columns = _get_observing_columns(data, columns_subset)
     if len(observing_columns) == 0: return data
 
-    match categorical_encoding_method:
+    match feature_encoding_method:
         # Encode the observing columns using label encoder
-        case CategoricalEncodingMethod.LABEL_ENCODING:
+        case FeatureEncodingMethod.LABEL_ENCODING:
             label_encoder = LabelEncoder()
             for col in observing_columns:
                 # The names of the new columns are defined and concat them to end of original columns
                 data["_".join([col, "encoded"])] = label_encoder.fit_transform(data[col])
 
-        case CategoricalEncodingMethod.ONEHOT_ENCODING:
+        case FeatureEncodingMethod.ONEHOT_ENCODING:
             # Encode observing columns using one-hot encoder
             onehot_encoder = OneHotEncoder(sparse_output=False)
             for col in observing_columns:
@@ -118,7 +118,7 @@ def encode_feature(data : pd.DataFrame, categorical_encoding_method : Categorica
                 # Concat the new datafram to end of original columns
                 data = pd.concat([data, encoded_df], axis=1)
 
-        case CategoricalEncodingMethod.HASHING:
+        case FeatureEncodingMethod.HASHING:
             for col in observing_columns:
                 # Find the log2 of the number of categories (number of unique values in the columns)
                 # It is the optimal number of components to reduce the collisions while having good performance
@@ -148,7 +148,7 @@ class EncodeFeatureStep(_PipelineStep):
 
     Parameters
     ----------
-    categorical_encoding_method : CategoricalEncodingMethod
+    feature_encoding_method : FeatureEncodingMethod
         Strategy to use for encoding categorical features (e.g., OneHot, Ordinal, Binary).
     
     columns_subset : List, optional
@@ -159,14 +159,14 @@ class EncodeFeatureStep(_PipelineStep):
         If True, prints details about the encoding process.
     """
     def __init__(self, 
-                categorical_encoding_method : CategoricalEncodingMethod,
+                feature_encoding_method : FeatureEncodingMethod,
                 columns_subset : List = None,
                 verbose : bool = False
                 ):
         
-        self.categorical_encoding_method = categorical_encoding_method
+        self.feature_encoding_method = feature_encoding_method
         self.columns_subset = columns_subset
         self.verbose = verbose
 
     def apply(self, data : pd.DataFrame) -> pd.DataFrame:
-        return encode_feature(data, self.categorical_encoding_method, self.columns_subset)
+        return encode_feature(data, self.feature_encoding_method, self.columns_subset)

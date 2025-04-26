@@ -34,7 +34,7 @@ from .type_conversion import (
 from .feature_encoding import (
     encode_feature,
     EncodeFeatureStep,
-    CategoricalEncodingMethod
+    FeatureEncodingMethod
 )
 
 from .feature_scaling import (
@@ -72,7 +72,7 @@ __all__ = [
     # feature_encoding
     "encode_feature",
     "EncodeFeatureStep",
-    "CategoricalEncodingMethod",
+    "FeatureEncodingMethod",
     # feature_scaling
     "scale_feature",
     "TypeConversionStep",
