@@ -39,8 +39,7 @@ from .feature_encoding import (
 
 from .feature_scaling import (
     scale_feature,
-    TypeConversionStep,
-    ScalingMethod
+    ScaleFeatureStep
 )
 
 __all__ = [
@@ -75,6 +74,5 @@ __all__ = [
     "FeatureEncodingMethod",
     # feature_scaling
     "scale_feature",
-    "TypeConversionStep",
-    "ScalingMethod"
+    "ScaleFeatureStep"
 ]

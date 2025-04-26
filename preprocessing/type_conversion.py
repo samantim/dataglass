@@ -202,7 +202,7 @@ class TypeConversionStep(_PipelineStep):
     """
     def __init__(self, 
                 convert_datatype_method : ConvertDatatypeMethod,
-                convert_scenario : Dict,
+                convert_scenario : Dict = None,
                 verbose : bool = False
                 ):
         
@@ -215,4 +215,6 @@ class TypeConversionStep(_PipelineStep):
             case ConvertDatatypeMethod.AUTO:
                 return convert_datatype_auto(data, self.verbose)
             case ConvertDatatypeMethod.USER_DEFINED:
+                if not self.convert_scenario:
+                    raise ValueError("Converting scenario is mandatory in user-defined mode.")
                 return convert_datatype_userdefined(data, self.convert_scenario, self.verbose)

@@ -44,7 +44,7 @@ from enum import Enum
 from ..pipeline.pipeline import _PipelineStep
 
 
-class ScalingMethod(Enum):
+class _ScalingMethod(Enum):
     """
     Enumeration of supported feature scaling methods.
 
@@ -110,7 +110,7 @@ def scale_feature(data : pd.DataFrame, scaling_scenario : Dict, apply_l2normaliz
 
     scaling_scenario["scaling_method"] = [sm.strip() for sm in scaling_scenario["scaling_method"]]
     # Check all the provided scaling_method to be valid
-    if not all(sm in [c.name for c in list(ScalingMethod)] for sm in scaling_scenario["scaling_method"]):
+    if not all(sm in [c.name for c in list(_ScalingMethod)] for sm in scaling_scenario["scaling_method"]):
         raise ValueError("At least one of the scaling methods provided in the scenario is not valid! The only acceptable data types are: {MINMAX_SCALING, ZSCORE_STANDARDIZATION, ROBUST_SCALING}")
 
     # Create a list of tuples (column, scaling_method)
@@ -120,13 +120,13 @@ def scale_feature(data : pd.DataFrame, scaling_scenario : Dict, apply_l2normaliz
     # Then update the date[column]
     for column, scaling_method in scale_scenario_zipped:
         match scaling_method:
-            case ScalingMethod.MINMAX_SCALING.name:
+            case _ScalingMethod.MINMAX_SCALING.name:
                 minmax_scaler = MinMaxScaler()
                 data[column] = minmax_scaler.fit_transform(data[[column]])
-            case ScalingMethod.ZSCORE_STANDARDIZATION.name:
+            case _ScalingMethod.ZSCORE_STANDARDIZATION.name:
                 zscore_standardization = StandardScaler()
                 data[column] = zscore_standardization.fit_transform(data[[column]])
-            case ScalingMethod.ROBUST_SCALING.name:
+            case _ScalingMethod.ROBUST_SCALING.name:
                 robust_scaler = RobustScaler()
                 data[column] = robust_scaler.fit_transform(data[[column]])
 
@@ -146,7 +146,7 @@ def scale_feature(data : pd.DataFrame, scaling_scenario : Dict, apply_l2normaliz
     return data
 
 
-class TypeConversionStep(_PipelineStep):
+class ScaleFeatureStep(_PipelineStep):
     """
     Pipeline step for applying feature scaling and optional L2 normalization.
 
