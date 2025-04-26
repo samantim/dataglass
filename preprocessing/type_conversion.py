@@ -80,6 +80,11 @@ def convert_datatype_auto(data : pd.DataFrame, verbose : bool = False) -> pd.Dat
             # Convert data type of the numeric-like columns which has object type
             if data[col].dtype == "object":
                 data[col] = pd.to_numeric(data[col])
+            # If the type is float but it is not necessary based on the column contents, it will cast to int
+            if pd.api.types.is_float_dtype(data[col]):
+                # Check if there is any fractional part in the column contents, if there is not any, it is safe to convert to int (otherwise it leads to data loss)
+                if (data[col].dropna() % 1 == 0).all():
+                    data[col] = data[col].astype("int64")
         except:
             pass
 
