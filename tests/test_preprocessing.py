@@ -1,60 +1,180 @@
 import pandas as pd
 import numpy as np
 import pytest
+from datetime import datetime
 from ..preprocessing import *
 from ..pipeline import DataPipeline
 
 # Sample dataset to run the tests with
 @pytest.fixture
 def sample_data() -> pd.DataFrame:
-    # | id | age  | income  | gender | country | score | signup_date | subscription |
-    # |----|------|---------|--------|---------|-------|-------------|--------------|
-    # | 1  | 25   | 50000   | Male   | US      | 80    | 2023-01-01  | Basic        |
-    # | 2  | 30   | 60000   | Female | UK      | 85    | 2023-02-01  | Premium      |
-    # | 3  | 22   | 45000   | Female | US      | 70    | 2023-03-01  | Basic        |
-    # | 4  | 40   | 80000   | Male   | DE      | 90    | 2023-04-01  | Premium      |
-    # | 5  | 35   | 75000   | Female | FR      | 88    | 2023-05-01  | Basic        |
-    # | 6  | 28   | 52000   | Male   | US      | 82    | 2023-06-01  | Premium      |
-    # | 7  | NaN  | 61000   | Female | UK      | 85    | 2023-07-01  | Basic        |missing
-    # | 8  | 32   | NaN     | Male   | DE      | 78    | 2023-08-01  | Premium      |missing
-    # | 9  | 27   | 50000   | NaN    | US      | 76    | 2023-09-01  | Basic        |missing
-    # | 10 | 45   | 100000  | Female | FR      | NaN   | 2023-10-01  | Premium      |missing
-    # | 11 | 29   | 58000   | Male   | US      | 79    | 2023-11-01  | Basic        |
-    # | 12 | 33   | 62000   | Female | DE      | 81    | 2023-12-01  | Premium      |
-    # | 13 | 24   | 47000   | Male   | UK      | 75    | 2024-01-01  | Basic        |
-    # | 14 | 55   | 200000  | Male   | US      | 95    | 2024-02-01  | Premium      |outlier candidate (income)
-    # | 15 | 31   | 54000   | Female | FR      | 83    | 2024-03-01  | Basic        |
-    # | 16 | 60   | 300000  | Female | US      | 99    | 2024-04-01  | Premium      |outlier candidate (income)
-    # | 17 | 26   | 49000   | Male   | UK      | 77    | 2024-05-01  | Basic        |
-    # | 18 | 42   | 85000   | Female | DE      | 89    | 2024-06-01  | Premium      |
-    # | 19 | 25   | 50000   | Male   | US      | 80    | 2023-01-01  | Basic        |duplicate (id = 1)
-    # | 20 | 40   | 80000   | Male   | DE      | 90    | 2023-04-01  | Premium      |duplicate (id = 4)
+# | Index | Age  | Income  | Gender | Country | Score | Signup Date | Loyalty Score | Subscription |
+# |-------|------|---------|--------|---------|-------|-------------|---------------|--------------|
+# | 0     | 25   | 50000   | Male   | US      | 80    | 2023-01-01  | 27            | Basic        |
+# | 1     | 25   | 50000   | Male   | US      | 80    | 2023-01-01  | 27            | Basic        | (duplicate of id=0)
+# | 2     | 22   | 45000   | Female | US      | 70    | 2023-03-01  | 25            | Basic        |
+# | 3     | 40   | 80000   | Male   | DE      | 90    | 2023-04-01  | 24            | Premium      |
+# | 4     | 35   | 75000   | Female | FR      | 88    | 2023-05-01  | 23            | Basic        |
+# | 5     | 28   | 52000   | Male   | US      | 82    | 2023-06-20  | NaN           | Premium      |  (missing loyalty_score)
+# | 6     | NaN  | 61000   | Female | UK      | 85    | 2023-07-01  | NaN           | Basic        |  (missing age, loyalty_score)
+# | 7     | 32   | NaN     | Male   | DE      | 78    | 2023-08-01  | 20            | Premium      |  (missing income)
+# | 8     | 27   | 50000   | NaN    | US      | 76    | 2023-09-01  | 19            | Basic        |  (missing gender)
+# | 9     | 45   | 100000  | Female | FR      | NaN   | 2023-10-01  | 18            | Premium      |  (missing score)
+# | 10    | 29   | 58000   | Male   | US      | 79    | 2023-11-01  | 17            | Basic        |
+# | 11    | 33   | 62000   | Female | DE      | 81    | 2023-12-01  | 16            | Premium      |
+# | 12    | 24   | 47000   | Male   | UK      | 75    | 2024-01-01  | 15            | Basic        |
+# | 13    | 55   | 200000  | Male   | US      | 95    | 2024-02-01  | 14            | Premium      |  (outlier income)
+# | 14    | 31   | 54000   | Female | FR      | 83    | 2024-03-01  | 13            | Basic        |
+# | 15    | 60   | 300000  | Female | US      | 99    | 2024-04-01  | 12            | Premium      |  (outlier income)
+# | 16    | 26   | 49000   | Male   | UK      | 77    | 2024-05-01  | 11            | Basic        |
+# | 17    | 42   | 85000   | Female | DE      | 89    | 2024-06-01  | 10            | Premium      |
+# | 18    | 25   | 50000   | Male   | US      | 80    | 2025-01-01  | 9             | Basic        | 
+# | 19    | 40   | 80000   | Male   | DE      | 90    | 2025-04-01  | 8             | Premium      |  
 
     contents = {
-        "age": [25.0, 30, 22, 40, 35, 28, np.nan, 32, 27, 45,
+        "age": [25.0, 25, 22, 40, 35, 28, np.nan, 32, 27, 45,
                 29, 33, 24, 55, 31, 60, 26, 42, 25, 40],
-        "income": [50000, 60000, 45000, 80000, 75000, 52000, 61000, np.nan, 50000, 100000,
+        "income": [50000, 50000, 45000, 80000, 75000, 52000, 61000, np.nan, 50000, 100000,
                 58000, 62000, 47000, 200000, 54000, 300000, 49000, 85000, 50000, 80000],
-        "gender": ["Male", "Female", "Female", "Male", "Female", "Male", "Female", "Male", np.nan, "Female",
+        "gender": ["Male", "Male", "Female", "Male", "Female", "Male", "Female", "Male", np.nan, "Female",
                 "Male", "Female", "Male", "Male", "Female", "Female", "Male", "Female", "Male", "Male"],
-        "country": ["US", "UK", "US", "DE", "FR", "US", "UK", "DE", "US", "FR",
+        "country": ["US", "US", "US", "DE", "FR", "US", "UK", "DE", "US", "FR",
                     "US", "DE", "UK", "US", "FR", "US", "UK", "DE", "US", "DE"],
-        "score": [80, 85, 70, 90, 88, 82, 85, 78, 76, np.nan,
+        "score": [80, 80, 70, 90, 88, 82, 85, 78, 76, np.nan,
                 79, 81, 75, 95, 83, 99, 77, 89, 80, 90],
         "signup_date": [
-            "2023-01-01", "2023-02-01", "2023-03-01", "2023-04-01", "2023-05-01",
-            "2023-06-01", "2023-07-01", "2023-08-01", "2023-09-01", "2023-10-01",
+            "2023-01-01", "2023-01-01", "2023-03-01", "2023-04-01", "2023-05-01",
+            "2023-06-20", "2023-07-01", "2023-08-01", "2023-09-01", "2023-10-01",
             "2023-11-01", "2023-12-01", "2024-01-01", "2024-02-01", "2024-03-01",
-            "2024-04-01", "2024-05-01", "2024-06-01", "2023-01-01", "2023-04-01"
+            "2024-04-01", "2024-05-01", "2024-06-01", "2025-01-01", "2025-04-01"
         ],
-        "subscription": ["Basic", "Premium", "Basic", "Premium", "Basic", "Premium", "Basic", "Premium", "Basic", "Premium",
-                        "Basic", "Premium", "Basic", "Premiums", "Basic", "Premium", "Basic", "Premium", "Basic", "Premium"]
+        "loyalty_score" : [27, 27, 25, 24, 23, np.nan, np.nan, 20, 19,
+                            18,17, 16, 15, 14, 13, 12, 11, 10, 9, 8],
+        "subscription": ["Basic", "Basic", "Basic", "Premium", "Basic", "Premium", "Basic", "Premium", "Basic", "Premium",
+                        "Basic", "Premium", "Basic", "Premiums", "Basic", "Premium", "Basic", "Premium", "Basic", "Premium"
+        ]
     }
-    data = pd.DataFrame(contents, index=range(1, 21))
+    data = pd.DataFrame(contents, index=range(20))
     return data
 
 
-# Test simplest and minimal way of using the pipeline
+# ======================================= #
+#      Handle Missing functions tests     #
+# ======================================= #
+
+def test_handle_missing_drop(sample_data):
+    input_data = sample_data.copy()
+    cleaned_data = handle_missing_values_drop(input_data, verbose=True)
+    # Original data should remain unchanged
+    assert input_data.equals(sample_data)
+    # Check for elimination of missing
+    assert len(cleaned_data) == len(input_data.dropna())
+
+
+def test_handle_missing_datatype_imputation_mean(sample_data):
+    input_data = sample_data.copy()
+    cleaned_data = handle_missing_values_datatype_imputation(input_data, NumericDatatypeImputationMethod.MEAN, verbose=True)
+    # Original data should remain unchanged
+    assert input_data.equals(sample_data)
+    # Check if no row is eliminated
+    assert len(cleaned_data) == len(input_data)
+    # Check the imputation of the columns "age" and "score" by mean
+    assert cleaned_data.loc[6,"age"] == input_data["age"].mean(skipna=True)
+    assert cleaned_data.loc[9,"score"] == input_data["score"].mean(skipna=True)
+    # Despite NumericDatatypeImputationMethod, categorical columns are always imputed by mode
+    assert cleaned_data.loc[8,"gender"] == input_data["gender"].mode(dropna=True)[0]
+
+
+def test_handle_missing_datatype_imputation_median(sample_data):
+    input_data = sample_data.copy()
+    cleaned_data = handle_missing_values_datatype_imputation(input_data, NumericDatatypeImputationMethod.MEDIAN, verbose=True)
+    # Original data should remain unchanged
+    assert input_data.equals(sample_data)
+    # Check if no row is eliminated
+    assert len(cleaned_data) == len(input_data)
+    # Check the imputation of the columns "age" and "score" by median
+    assert cleaned_data.loc[6,"age"] == input_data["age"].median(skipna=True)
+    assert cleaned_data.loc[9,"score"] == input_data["score"].median(skipna=True)
+    # Despite NumericDatatypeImputationMethod, categorical columns are always imputed by mode
+    assert cleaned_data.loc[8,"gender"] == input_data["gender"].mode(dropna=True)[0]
+
+
+def test_handle_missing_datatype_imputation_mode(sample_data):
+    input_data = sample_data.copy()
+    cleaned_data = handle_missing_values_datatype_imputation(input_data, NumericDatatypeImputationMethod.MODE, verbose=True)
+    # Original data should remain unchanged
+    assert input_data.equals(sample_data)
+    # Check if no row is eliminated
+    assert len(cleaned_data) == len(input_data)
+    # Check the imputation of the columns "age" and "score" by mode
+    assert cleaned_data.loc[6,"age"] == input_data["age"].mode(dropna=True)[0]
+    assert cleaned_data.loc[9,"score"] == input_data["score"].mode(dropna=True)[0]
+    # Despite NumericDatatypeImputationMethod, categorical columns are always imputed by mode
+    assert cleaned_data.loc[8,"gender"] == input_data["gender"].mode(dropna=True)[0]
+
+
+def test_handle_missing_adjacent_value_imputation_backward(sample_data):
+    input_data = sample_data.copy()
+    cleaned_data = handle_missing_values_adjacent_value_imputation(input_data, AdjacentImputationMethod.BACKWARD, verbose=True)
+    # Original data should remain unchanged
+    assert input_data.equals(sample_data)
+    # Check if no row is eliminated
+    assert len(cleaned_data) == len(input_data)
+    # Check the imputation of the columns "age", "score", and "gender" by bfill
+    assert cleaned_data.loc[6,"age"] == cleaned_data.loc[7,"age"]
+    assert cleaned_data.loc[9,"score"] == cleaned_data.loc[10,"score"] 
+    assert cleaned_data.loc[8,"gender"] == cleaned_data.loc[9,"gender"]
+
+
+def test_handle_missing_adjacent_value_imputation_forward(sample_data):
+    input_data = sample_data.copy()
+    cleaned_data = handle_missing_values_adjacent_value_imputation(input_data, AdjacentImputationMethod.FORWARD, verbose=True)
+    # Original data should remain unchanged
+    assert input_data.equals(sample_data)
+    # Check if no row is eliminated
+    assert len(cleaned_data) == len(input_data)
+    # Check the imputation of the columns "age", "score", and "gender" by ffill
+    assert cleaned_data.loc[6,"age"] == cleaned_data.loc[5,"age"]
+    assert cleaned_data.loc[9,"score"] == cleaned_data.loc[8,"score"] 
+    assert cleaned_data.loc[8,"gender"] == cleaned_data.loc[8,"gender"]
+
+
+def test_handle_missing_adjacent_value_imputation_interpolation_linear(sample_data):
+    input_data = sample_data.copy()
+    cleaned_data = handle_missing_values_adjacent_value_imputation(input_data, AdjacentImputationMethod.INTERPOLATION_LINEAR, verbose=True)
+    # Original data should remain unchanged
+    assert input_data.equals(sample_data)
+    # Check if no row is eliminated
+    assert len(cleaned_data) == len(input_data)
+    # Check the imputation of the columns loyalty_score by linear interpolation
+    assert cleaned_data.loc[5,"loyalty_score"] == 22
+    assert cleaned_data.loc[6,"loyalty_score"] == 21
+
+
+def test_handle_missing_adjacent_value_imputation_interpolation_time(sample_data):
+    input_data = sample_data.copy()
+    cleaned_data = handle_missing_values_adjacent_value_imputation(input_data, AdjacentImputationMethod.INTERPOLATION_TIME, "signup_date", verbose=True)
+    # Original data should remain unchanged
+    assert input_data.equals(sample_data)
+    # Check if no row is eliminated
+    assert len(cleaned_data) == len(input_data)
+    # Check the imputation of the columns loyalty_score by time-based interpolation
+    # Convert the signup_date to pandas datetime for date delta calculations
+    signup_dates = pd.to_datetime(input_data["signup_date"], format="%Y-%m-%d")
+    # Date distance between the row before and the row after NaN area
+    date_delta = (signup_dates[7] - signup_dates[4]).days
+    # Loyalty score distance between the row before and the row after NaN area
+    loyalty_score_delta = input_data.loc[7,"loyalty_score"] - input_data.loc[4,"loyalty_score"]
+    # Calculate the expected results based on the time-based interpolation formula
+    assert cleaned_data.loc[5,"loyalty_score"] == cleaned_data.loc[4,"loyalty_score"] + (signup_dates[5] - signup_dates[4]).days / date_delta * loyalty_score_delta
+    assert cleaned_data.loc[6,"loyalty_score"] == cleaned_data.loc[4,"loyalty_score"] + (signup_dates[6] - signup_dates[4]).days / date_delta * loyalty_score_delta
+
+
+
+# ======================================= #
+#              Pipline Tests              #
+# ======================================= #
+
 def test_pipeline_simplestway(sample_data):
     handle_missing = HandleMissingStep(HandleMissingMethod.DROP)
     handle_duplicate = HandleDuplicateStep(HandleDuplicateMethod.EXACT)
@@ -74,19 +194,12 @@ def test_pipeline_simplestway(sample_data):
         ]
     )
 
-    input = sample_data.copy()
-    cleaned_data = dp.apply(input)
+    input_data = sample_data.copy()
+    cleaned_data = dp.apply(input_data)
 
-    print(input["age"].dropna() % 1)
-
-    print(input.dtypes)
-    print(cleaned_data.dtypes)
-    print(cleaned_data)
-    print(cleaned_data.shape)
-    
     # Original data should remain unchanged
-    assert input.equals(sample_data)
-    # Check for elimination of missing, duplicate, and outliers
+    assert input_data.equals(sample_data)
+    # Check for elimination of missing (5), duplicate (1), and outliers (2) -> 20-(5+1+2) = 12
     assert len(cleaned_data) == 12
     # Check auto type conversion
     assert pd.api.types.is_integer_dtype(cleaned_data["age"])
