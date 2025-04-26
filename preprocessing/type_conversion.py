@@ -40,6 +40,7 @@ import pandas as pd
 from typing import Dict
 from enum import Enum
 from ..pipeline.pipeline import _PipelineStep
+import warnings
 
 class ConvertDatatypeMethod(Enum):
     """
@@ -83,8 +84,9 @@ def convert_datatype_auto(data : pd.DataFrame, verbose : bool = False) -> pd.Dat
             pass
 
         try:
-            if not pd.api.types.is_numeric_dtype(data[col]):
-                data[col] = pd.to_datetime(data[col])
+            with warnings.catch_warnings(action="ignore"):
+                if not pd.api.types.is_numeric_dtype(data[col]):
+                    data[col] = pd.to_datetime(data[col])
         except:
             pass
 
