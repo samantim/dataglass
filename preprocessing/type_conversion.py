@@ -70,36 +70,39 @@ def convert_datatype_auto(data : pd.DataFrame, verbose : bool = False) -> pd.Dat
     """
     # Display dataset info before and after imputation if verbose is enabled
     # Show the data types before applying any conversion
+
+    result = data.copy()
+
     if verbose:
-        print(f"Before automatic datatype conversion, the datatype are as follows:\n{data.dtypes}")
+        print(f"Before automatic datatype conversion, the datatype are as follows:\n{result.dtypes}")
 
     # If the data type of the columns is not numeric, it try to convert it to datatime type
     # If the column content is not datetime no changes will happen
-    for col in data.columns:
+    for col in result.columns:
         try:
             # Convert data type of the numeric-like columns which has object type
-            if data[col].dtype == "object":
-                data[col] = pd.to_numeric(data[col])
+            if result[col].dtype == "object":
+                result[col] = pd.to_numeric(result[col])
             # If the type is float but it is not necessary based on the column contents, it will cast to int
-            if pd.api.types.is_float_dtype(data[col]):
+            if pd.api.types.is_float_dtype(result[col]):
                 # Check if there is any fractional part in the column contents, if there is not any, it is safe to convert to int (otherwise it leads to data loss)
-                if (data[col].dropna() % 1 == 0).all():
-                    data[col] = data[col].astype("int64")
+                if (result[col].dropna() % 1 == 0).all():
+                    result[col] = result[col].astype("int64")
         except:
             pass
 
         try:
             with warnings.catch_warnings(action="ignore"):
-                if not pd.api.types.is_numeric_dtype(data[col]):
-                    data[col] = pd.to_datetime(data[col])
+                if not pd.api.types.is_numeric_dtype(result[col]):
+                    result[col] = pd.to_datetime(result[col])
         except:
             pass
 
     # Show the data types after applying auto conversions
     if verbose:
-        print(f"After automatic datatype conversion, the datatype are as follows:\n{data.dtypes}")
+        print(f"After automatic datatype conversion, the datatype are as follows:\n{result.dtypes}")
 
-    return data    
+    return result    
 
 
 def convert_datatype_userdefined(data : pd.DataFrame, convert_scenario : Dict, verbose : bool = False) -> pd.DataFrame:
@@ -131,16 +134,18 @@ def convert_datatype_userdefined(data : pd.DataFrame, convert_scenario : Dict, v
     #  "datatype":["int", "datetime"],
     #  "format":["", "%m/%d/%Y"] }
 
+    result = data.copy()
+    
     # Strip whitespaces
     for key in convert_scenario.keys():
         convert_scenario[key] = [item.strip() for item in convert_scenario[key]]
 
     # Show the data types before applying any conversion
     if verbose:
-        print(f"Before automatic datatype conversion, the datatype are as follows:\n{data.dtypes}")
+        print(f"Before automatic datatype conversion, the datatype are as follows:\n{result.dtypes}")
     
     # Check all the provided column names to be in the dataset
-    if not all(col in data.columns for col in convert_scenario["column"]):
+    if not all(col in result.columns for col in convert_scenario["column"]):
         raise ValueError("At least one of the columns provided in the scenario is not valid!")
     
     # Check all the provided datatypes to be valid
@@ -165,24 +170,24 @@ def convert_datatype_userdefined(data : pd.DataFrame, convert_scenario : Dict, v
             match dt:
                 case "int":
                     # If the current type is not int, the conversion will apply
-                    if not pd.api.types.is_integer_dtype(data[col]):
-                        data[col] = data[col].astype("int")
+                    if not pd.api.types.is_integer_dtype(result[col]):
+                        result[col] = result[col].astype("int")
                 case "float":
                     # If the current type is not int, the conversion will apply
-                    if not pd.api.types.is_float_dtype(data[col]):
-                        data[col] = data[col].astype("float")
+                    if not pd.api.types.is_float_dtype(result[col]):
+                        result[col] = result[col].astype("float")
                 case "datetime":
                     # If the current type is not numeric and datetime, the conversion will apply
-                    if not pd.api.types.is_datetime64_any_dtype(data[col]) and not pd.api.types.is_numeric_dtype(data[col]):
-                        data[col] = pd.to_datetime(data[col], format=ft)
+                    if not pd.api.types.is_datetime64_any_dtype(result[col]) and not pd.api.types.is_numeric_dtype(result[col]):
+                        result[col] = pd.to_datetime(result[col], format=ft)
         except Exception as e:
             raise ValueError(f"Conversion failed for column '{col}' with error: {e}")
     
     # Show the data types after applying auto conversions
     if verbose:
-        print(f"After automatic datatype conversion, the datatype are as follows:\n{data.dtypes}")
+        print(f"After automatic datatype conversion, the datatype are as follows:\n{result.dtypes}")
 
-    return data
+    return result
 
 
 class TypeConversionStep(_PipelineStep):

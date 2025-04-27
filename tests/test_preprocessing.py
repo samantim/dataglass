@@ -456,6 +456,39 @@ def test_handle_outlier_cap_with_boundaries(sample_data):
     assert result.loc[13,"age"] == 40
     assert result.loc[15,"age"] == 30
 
+
+# ======================================= #
+#     type conversion functions tests     #
+# ======================================= #
+
+def test_type_conversion_auto(sample_data):
+    input_data = sample_data.copy()
+    # NaN values are droped because int dtype does not suppurt NaN values
+    dropedna_input_data = input_data.dropna()
+    result = convert_datatype_auto(dropedna_input_data, verbose=True)
+    # Original data should remain unchanged, in this case NaN values are droped first
+    assert input_data.dropna().equals(dropedna_input_data)
+    # Check the inferred data types
+    assert pd.api.types.is_integer_dtype(result["age"])
+    assert pd.api.types.is_datetime64_any_dtype(result["signup_date"])
+
+def test_type_conversion_userdefined(sample_data):
+    input_data = sample_data.copy()
+    # NaN values are droped because int dtype does not suppurt NaN values
+    dropedna_input_data = input_data.dropna()
+    convert_scenario =  {
+        "column": ["age", "score", "signup_date"],
+        "datatype": ["int", "float", "datetime"],
+        "format": ["", "", "%Y-%m-%d"]
+    }
+    result = convert_datatype_userdefined(dropedna_input_data, convert_scenario=convert_scenario, verbose=True)
+    # Original data should remain unchanged, in this case NaN values are droped first
+    assert input_data.dropna().equals(dropedna_input_data)
+    # Check the inferred data types
+    assert pd.api.types.is_integer_dtype(result["age"])
+    assert pd.api.types.is_float_dtype(result["score"])
+    assert pd.api.types.is_datetime64_any_dtype(result["signup_date"])
+
 # ======================================= #
 #              Pipline Tests              #
 # ======================================= #
