@@ -461,6 +461,8 @@ def test_handle_outlier_cap_with_boundaries(sample_data):
 #     type conversion functions tests     #
 # ======================================= #
 
+# -----------------Auto------------------ #
+
 def test_type_conversion_auto(sample_data):
     input_data = sample_data.copy()
     # NaN values are droped because int dtype does not suppurt NaN values
@@ -471,6 +473,8 @@ def test_type_conversion_auto(sample_data):
     # Check the inferred data types
     assert pd.api.types.is_integer_dtype(result["age"])
     assert pd.api.types.is_datetime64_any_dtype(result["signup_date"])
+
+# --------------User Defined------------- #
 
 def test_type_conversion_userdefined(sample_data):
     input_data = sample_data.copy()
@@ -489,40 +493,127 @@ def test_type_conversion_userdefined(sample_data):
     assert pd.api.types.is_float_dtype(result["score"])
     assert pd.api.types.is_datetime64_any_dtype(result["signup_date"])
 
+
+# ======================================= #
+#    feature encoding functions tests     #
+# ======================================= #
+
+# -------------Label Encoding------------ #
+
+def test_encode_feature_label_encoding_allcolumns(sample_data):
+    input_data = sample_data.copy()
+    # NaN values are droped because int dtype does not suppurt NaN values
+    dropedna_input_data = input_data.dropna()
+    result = encode_feature(dropedna_input_data, feature_encoding_method=FeatureEncodingMethod.LABEL_ENCODING)
+    # Original data should remain unchanged, in this case NaN values are droped first
+    assert input_data.dropna().equals(dropedna_input_data)
+    # Check the the encoded columns only contains valid values
+    assert result["gender_encoded"].isin([0,1]).all()
+    assert result["country_encoded"].isin(range(4)).all()
+
+def test_encode_feature_label_encoding_subsetcolumns(sample_data):
+    input_data = sample_data.copy()
+    # NaN values are droped because int dtype does not suppurt NaN values
+    dropedna_input_data = input_data.dropna()
+    columns_subset = ["gender"]
+    result = encode_feature(dropedna_input_data, feature_encoding_method=FeatureEncodingMethod.LABEL_ENCODING, columns_subset=columns_subset)
+    # Original data should remain unchanged, in this case NaN values are droped first
+    assert input_data.dropna().equals(dropedna_input_data)
+    # Check the the encoded columns only contains valid values
+    assert result["gender_encoded"].isin([0,1]).all()
+    # Check other columns are not encoded
+    assert not "country_encoded" in result.columns
+
+# -------------Onehot Encoding------------ #
+
+def test_encode_feature_onehot_encoding_allcolumns(sample_data):
+    input_data = sample_data.copy()
+    # NaN values are droped because int dtype does not suppurt NaN values
+    dropedna_input_data = input_data.dropna()
+    result = encode_feature(dropedna_input_data, feature_encoding_method=FeatureEncodingMethod.ONEHOT_ENCODING)
+    # Original data should remain unchanged, in this case NaN values are droped first
+    assert input_data.dropna().equals(dropedna_input_data)
+    # Check the the encoded columns only contains valid values
+    assert result["gender_Male"].isin([0,1]).all()
+    assert result["gender_Female"].isin([0,1]).all()
+    assert result["country_US"].isin([0,1]).all()
+    
+def test_encode_feature_onehot_encoding_subsetcolumns(sample_data):
+    input_data = sample_data.copy()
+    # NaN values are droped because int dtype does not suppurt NaN values
+    dropedna_input_data = input_data.dropna()
+    columns_subset = ["gender"]
+    result = encode_feature(dropedna_input_data, feature_encoding_method=FeatureEncodingMethod.ONEHOT_ENCODING, columns_subset=columns_subset)
+    # Original data should remain unchanged, in this case NaN values are droped first
+    assert input_data.dropna().equals(dropedna_input_data)
+    # Check the the encoded columns only contains valid values
+    assert result["gender_Male"].isin([0,1]).all()
+    assert result["gender_Female"].isin([0,1]).all()
+    # Check other columns are not encoded
+    assert not "country_US" in result.columns
+
+# ----------------Hashing---------------- #
+
+def test_encode_feature_hashing_allcolumns(sample_data):
+    input_data = sample_data.copy()
+    # NaN values are droped because int dtype does not suppurt NaN values
+    dropedna_input_data = input_data.dropna()
+    result = encode_feature(dropedna_input_data, feature_encoding_method=FeatureEncodingMethod.HASHING)
+    # Original data should remain unchanged, in this case NaN values are droped first
+    assert input_data.dropna().equals(dropedna_input_data)
+    # Check the the encoded columns only contains valid values
+    print(result.columns)
+    assert result["gender_col_0"].isin([-1,0,1]).all()
+    assert result["country_col_0"].isin([-1,0,1]).all()
+    assert result["country_col_1"].isin([-1,0,1]).all()
+    
+def test_encode_feature_hashing_subsetcolumns(sample_data):
+    input_data = sample_data.copy()
+    # NaN values are droped because int dtype does not suppurt NaN values
+    dropedna_input_data = input_data.dropna()
+    columns_subset = ["gender"]
+    result = encode_feature(dropedna_input_data, feature_encoding_method=FeatureEncodingMethod.HASHING, columns_subset=columns_subset)
+    # Original data should remain unchanged, in this case NaN values are droped first
+    assert input_data.dropna().equals(dropedna_input_data)
+    # Check the the encoded columns only contains valid values
+    assert result["gender_col_0"].isin([-1,0,1]).all()
+    # Check other columns are not encoded
+    assert not "country_col_0" in result.columns
+
 # ======================================= #
 #              Pipline Tests              #
 # ======================================= #
 
-# def test_pipeline_simplestway(sample_data):
-#     handle_missing = HandleMissingStep(HandleMissingMethod.DROP)
-#     handle_duplicate = HandleDuplicateStep(HandleDuplicateMethod.EXACT)
-#     handle_outlier = HandleOutlierStep(DetectOutlierMethod.IQR, HandleOutlierMethod.DROP)
-#     encode_feature = EncodeFeatureStep(FeatureEncodingMethod.LABEL_ENCODING, ["gender"])
-#     scale_feature = ScaleFeatureStep({"column": ["score"], "scaling_method": ["MINMAX_SCALING"]})
-#     type_conversion = TypeConversionStep(ConvertDatatypeMethod.AUTO, verbose = True)
+def test_pipeline_simplestway(sample_data):
+    handle_missing = HandleMissingStep(HandleMissingMethod.DROP)
+    handle_duplicate = HandleDuplicateStep(HandleDuplicateMethod.EXACT)
+    handle_outlier = HandleOutlierStep(DetectOutlierMethod.IQR, HandleOutlierMethod.DROP)
+    encode_feature = EncodeFeatureStep(FeatureEncodingMethod.LABEL_ENCODING, ["gender"])
+    scale_feature = ScaleFeatureStep({"column": ["score"], "scaling_method": ["MINMAX_SCALING"]})
+    type_conversion = TypeConversionStep(ConvertDatatypeMethod.AUTO, verbose = True)
 
-#     dp =  DataPipeline(
-#         [
-#         handle_missing,
-#         handle_duplicate,
-#         type_conversion,
-#         handle_outlier,
-#         scale_feature,
-#         encode_feature,
-#         ]
-#     )
+    dp =  DataPipeline(
+        [
+        handle_missing,
+        handle_duplicate,
+        type_conversion,
+        handle_outlier,
+        scale_feature,
+        encode_feature,
+        ]
+    )
 
-#     input_data = sample_data.copy()
-#     result = dp.apply(input_data)
+    input_data = sample_data.copy()
+    result = dp.apply(input_data)
 
-#     # Original data should remain unchanged
-#     assert input_data.equals(sample_data)
-#     # Check for elimination of missing (5), duplicate (1), and outliers (2) -> 20-(5+1+2) = 12
-#     assert len(result) == 12
-#     # Check auto type conversion
-#     assert pd.api.types.is_integer_dtype(result["age"])
-#     assert pd.api.types.is_datetime64_dtype(result["signup_date"])
-#     # Check feature "score" is scaled to [0,1]
-#     assert (result["score"] >= 0).all() and (result["score"] <= 1).all()
-#     # Check feature "gender" is correctly encoded
-#     assert result["gender_encoded"].isin([0,1]).all()
+    # Original data should remain unchanged
+    assert input_data.equals(sample_data)
+    # Check for elimination of missing (5), duplicate (1), and outliers (3) -> 20-(5+1+3) = 11
+    assert len(result) == 11
+    # Check auto type conversion
+    assert pd.api.types.is_integer_dtype(result["age"])
+    assert pd.api.types.is_datetime64_dtype(result["signup_date"])
+    # Check feature "score" is scaled to [0,1]
+    assert (result["score"] >= 0).all() and (result["score"] <= 1).all()
+    # Check feature "gender" is correctly encoded
+    assert result["gender_encoded"].isin([0,1]).all()

@@ -63,20 +63,25 @@ class FeatureEncodingMethod(Enum):
 
 def _get_observing_columns(data : pd.DataFrame, columns_subset : List) -> List:
     # Prepare observing columns
-    # Strip whitespaces
-    if columns_subset: columns_subset = [col.strip() for col in columns_subset]
-    try:
-        # If columns_subset only has categorical columns is valid
-        categorical_columns = data.select_dtypes(exclude="number").columns
-        # If columns_subset is not None and one of its columns does not exist in categorical columns
-        if columns_subset and not all(col in categorical_columns for col in columns_subset):
-            raise ValueError("The columns subset contains numeric columns!")
 
-        else:
-            # If there is a valid subset, it is considered as the observing columns otherwise all categorical columns are considered
-            observing_columns = columns_subset if columns_subset else categorical_columns
-    except:
-        raise ValueError("The columns subset is not valid!")
+    # All categorical columns of the dataset
+    categorical_columns = data.select_dtypes(exclude="number").columns.to_list()
+
+    if columns_subset: 
+        # Strip whitespaces
+        columns_subset = [col.strip() for col in columns_subset]
+        try:
+            # Check if one of its columns does not exist in categorical columns
+            if not all(col in categorical_columns for col in columns_subset):
+                raise ValueError("The columns subset contains numeric columns!")
+            else:
+                # If there is a valid subset, it is considered as the observing columns
+                observing_columns = columns_subset
+        except:
+            raise ValueError("The columns subset is not valid!")
+    else:
+        # if there is and empty or none columns_subset, all categorical columns will be considered as the observing columns
+        observing_columns = categorical_columns
 
     return observing_columns 
 
@@ -97,45 +102,55 @@ def encode_feature(data : pd.DataFrame, feature_encoding_method : FeatureEncodin
     observing_columns = _get_observing_columns(data, columns_subset)
     if len(observing_columns) == 0: return data
 
+    if data[observing_columns].isna().sum().sum() > 0:
+        raise ValueError("Feature encoding does not work when the data contains NaN values.")
+
+    result = data.copy()
+
+    # Ignore warnings
+    warnings.simplefilter("ignore")
+
+    # with warnings.catch_warnings(action="ignore"):
     match feature_encoding_method:
         # Encode the observing columns using label encoder
         case FeatureEncodingMethod.LABEL_ENCODING:
             label_encoder = LabelEncoder()
             for col in observing_columns:
                 # The names of the new columns are defined and concat them to end of original columns
-                data["_".join([col, "encoded"])] = label_encoder.fit_transform(data[col])
+                result["_".join([col, "encoded"])] = label_encoder.fit_transform(result[col])
 
         case FeatureEncodingMethod.ONEHOT_ENCODING:
             # Encode observing columns using one-hot encoder
             onehot_encoder = OneHotEncoder(sparse_output=False)
             for col in observing_columns:
                 # Create the encoded contents
-                encoded_columns = onehot_encoder.fit_transform(data[[col]])
+                encoded_columns = onehot_encoder.fit_transform(result[[col]])
                 # The column names also created by the model
                 encoded_columns_name = onehot_encoder.get_feature_names_out([col])
                 # Create a dataframe with contents and the column names
-                encoded_df = pd.DataFrame(data = encoded_columns, columns=encoded_columns_name, index=data.index)
+                encoded_df = pd.DataFrame(data = encoded_columns, columns=encoded_columns_name, index=result.index)
                 # Concat the new datafram to end of original columns
-                data = pd.concat([data, encoded_df], axis=1)
+                result = pd.concat([result, encoded_df], axis=1)
 
         case FeatureEncodingMethod.HASHING:
             for col in observing_columns:
                 # Find the log2 of the number of categories (number of unique values in the columns)
                 # It is the optimal number of components to reduce the collisions while having good performance
-                unique_len = len(data[col].unique())
+                unique_len = len(result[col].unique())
                 # Throw a warning for the less number of unique values
-                if unique_len < 10: warnings.warn(f"Hashing for category number less than 10 is not reasonable (column='{col}', category number={unique_len}), and the results would not be promising!")
+                if unique_len < 10: 
+                    print(f"Warning: Hashing for category number less than 10 is not reasonable (column='{col}', category number={unique_len}), and the results would not be promising!")
                 n_components=ceil(log2(unique_len))
                 # Encode the observing columns using hashing encoder
                 hashing = ce.HashingEncoder(n_components = n_components, return_df=True)
                 # Create the encoded contents
-                encoded_columns = hashing.fit_transform(data[[col]])
+                encoded_columns = hashing.fit_transform(result[[col]])
                 # Enhance the names for more clarification
                 encoded_columns.columns = ["_".join([col,col_gen_name]) for col_gen_name in encoded_columns.columns]
                 # Concat the new datafram to end of original columns
-                data = pd.concat([data, encoded_columns], axis=1)
+                result = pd.concat([result, encoded_columns], axis=1)
 
-    return data
+    return result
 
 
 class EncodeFeatureStep(_PipelineStep):
