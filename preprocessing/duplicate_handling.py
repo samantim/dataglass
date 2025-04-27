@@ -52,7 +52,7 @@ class HandleDuplicateMethod(Enum):
     EXACT = 1
     FUZZY = 2
 
-def handle_duplicate_values_exact(data : pd.DataFrame, subset : List = None, verbose : bool = False) -> pd.DataFrame:
+def handle_duplicate_values_exact(data : pd.DataFrame, columns_subset : List = None, verbose : bool = False) -> pd.DataFrame:
     """
     Removes exact duplicate rows from a DataFrame.
 
@@ -60,7 +60,7 @@ def handle_duplicate_values_exact(data : pd.DataFrame, subset : List = None, ver
     ----------
     data : pd.DataFrame
         The input DataFrame to be cleaned.
-    subset : list of str, optional
+    columns_subset : list of str, optional
         List of column names to consider when identifying duplicates.
         If None, all columns are used.
     verbose : bool, default=False
@@ -83,9 +83,9 @@ def handle_duplicate_values_exact(data : pd.DataFrame, subset : List = None, ver
     # Check if column_subset is valid
     try:
         # Strip whitespaces
-        if subset: 
-            subset = [col.strip() for col in subset]
-            data[subset]
+        if columns_subset: 
+            columns_subset = [col.strip() for col in columns_subset]
+            data[columns_subset]
     except:
         raise ValueError("The columns subset is not valid!")
     
@@ -93,7 +93,7 @@ def handle_duplicate_values_exact(data : pd.DataFrame, subset : List = None, ver
         # keep='first' (default): Marks duplicates as True, except for the first occurrence.
         # keep='last': Marks duplicates as True, except for the last occurrence.
         # keep=False: Marks all duplicates (including the first and last) as True.
-    data_duplicated = data.duplicated(keep=False, subset=subset)
+    data_duplicated = data.duplicated(keep=False, subset=columns_subset)
     if verbose:
         print(f"Dataset has {data.shape[0]} rows before handling duplicate values.\nTop 10 of duplicate values are (Totally {data_duplicated.sum()} rows - including all duplicates, but from each group first one will remain and others will be removed):\n{data[data_duplicated].head(10)}")
 
@@ -101,7 +101,7 @@ def handle_duplicate_values_exact(data : pd.DataFrame, subset : List = None, ver
     # Subset is list of column names which we want to participate in the duplicate recognition
     # If it is None, all column values of a row should be the same as other's to consider as duplicates
     # here we use keep='first' (default), since we need to keep the first one from each group of duplicates
-    data = data.drop_duplicates(subset=subset)
+    data = data.drop_duplicates(subset=columns_subset)
 
     # Check dataset rows after removing duplicate rows
     if verbose:
@@ -110,7 +110,7 @@ def handle_duplicate_values_exact(data : pd.DataFrame, subset : List = None, ver
     return data
 
 
-def handle_duplicate_values_fuzzy(data : pd.DataFrame, subset : List = None, similarity_thresholds : Tuple = None, verbose : bool = False) -> pd.DataFrame:
+def handle_duplicate_values_fuzzy(data : pd.DataFrame, columns_subset : List = None, similarity_thresholds : Tuple = None, verbose : bool = False) -> pd.DataFrame:
     """
     Removes fuzzy duplicate rows from a DataFrame based on average string similarity across selected columns.
 
@@ -118,7 +118,7 @@ def handle_duplicate_values_fuzzy(data : pd.DataFrame, subset : List = None, sim
     ----------
     data : pd.DataFrame
         The input DataFrame to be cleaned.
-    subset : list of str, optional
+    columns_subset : list of str, optional
         List of column names to consider for fuzzy comparison. 
         If None, all columns are used.
     similarity_thresholds : tuple of int (min, max), optional
@@ -150,9 +150,9 @@ def handle_duplicate_values_fuzzy(data : pd.DataFrame, subset : List = None, sim
     # Check if column_subset is valid
     try:
         # Strip whitespaces
-        if subset: 
-            subset = [col.strip() for col in subset]
-            data[subset]
+        if columns_subset: 
+            columns_subset = [col.strip() for col in columns_subset]
+            data[columns_subset]
     except:
         raise ValueError("The columns subset is not valid!")
     
@@ -162,7 +162,7 @@ def handle_duplicate_values_fuzzy(data : pd.DataFrame, subset : List = None, sim
 
     # If a subset of columns is given, we only consider these columns in similarity comparisons
     # If it is not assigned, we use all columns (It is better to give all categorical columns to the function, as the fuzz method is basically for string matching)
-    comparison_columns = subset if subset else data.columns
+    comparison_columns = columns_subset if columns_subset else data.columns
 
     # This is a list containing sets of indexes. each set is for a group of duplicates.
     data_duplicated_sets = []
@@ -246,7 +246,7 @@ class HandleDuplicateStep(_PipelineStep):
     ----------
     handle_duplicate_method : HandleDuplicateMethod
         The method to use for detecting and removing duplicates (EXACT or FUZZY).
-    subset : list of str, optional
+    columns_subset : list of str, optional
         Column names to consider when identifying duplicates.
         If None, all columns are considered.
     similarity_thresholds : tuple of int, optional
@@ -262,19 +262,19 @@ class HandleDuplicateStep(_PipelineStep):
     """
     def __init__(self, 
                 handle_duplicate_method : HandleDuplicateMethod,
-                subset : List = None,
+                columns_subset : List = None,
                 similarity_thresholds : Tuple = None, 
                 verbose : bool = False
                 ):
         self.handle_duplicate_method = handle_duplicate_method
-        self.subset = subset
+        self.columns_subset = columns_subset
         self.similarity_thresholds = similarity_thresholds
         self.verbose = verbose
 
     def apply(self, data : pd.DataFrame) -> pd.DataFrame:
         match self.handle_duplicate_method:
             case HandleDuplicateMethod.EXACT:
-                return handle_duplicate_values_exact(data, self.subset, self.verbose)
+                return handle_duplicate_values_exact(data, self.columns_subset, self.verbose)
             case HandleDuplicateMethod.FUZZY:
-                return handle_duplicate_values_fuzzy(data, self.subset, self.similarity_thresholds, self.verbose)
+                return handle_duplicate_values_fuzzy(data, self.columns_subset, self.similarity_thresholds, self.verbose)
                 
