@@ -153,7 +153,7 @@ def handle_missing_values_datatype_imputation(data : pd.DataFrame, numeric_datat
         if Numeric datatype imputation method is not valid.
     """
     
-    result = data.copy(deep=False)
+    result = data.copy()
 
     # Display dataset info before and after imputation if verbose is enabled
     # Check for missing values
@@ -219,7 +219,7 @@ def handle_missing_values_adjacent_value_imputation(data: pd.DataFrame, adjacent
     # Check for missing values
     # It is also possible to use isnull() instead of isna()
 
-    result = data.copy(deep=False)
+    result = data.copy()
 
     if verbose:
         print(f"Dataset has {result.shape[0]} rows before handling missing values.\nMissing values are:\n{result.isna().sum()}")
