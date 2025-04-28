@@ -458,18 +458,18 @@ def test_handle_outlier_cap_with_boundaries(sample_data):
 
 
 # ======================================= #
-#     type conversion functions tests     #
+#     convert datatype functions tests    #
 # ======================================= #
 
 # -----------------Auto------------------ #
 
 def test_type_conversion_auto(sample_data):
     input_data = sample_data.copy()
-    # NaN values are droped because int dtype does not suppurt NaN values
-    dropedna_input_data = input_data.dropna()
-    result = convert_datatype_auto(dropedna_input_data, verbose=True)
-    # Original data should remain unchanged, in this case NaN values are droped first
-    assert input_data.dropna().equals(dropedna_input_data)
+    # NaN values are dropped because int dtype does not support NaN values
+    droppedna_input_data = input_data.dropna()
+    result = convert_datatype_auto(droppedna_input_data, verbose=True)
+    # Original data should remain unchanged, in this case NaN values are dropped first
+    assert input_data.dropna().equals(droppedna_input_data)
     # Check the inferred data types
     assert pd.api.types.is_integer_dtype(result["age"])
     assert pd.api.types.is_datetime64_any_dtype(result["signup_date"])
@@ -478,16 +478,16 @@ def test_type_conversion_auto(sample_data):
 
 def test_type_conversion_userdefined(sample_data):
     input_data = sample_data.copy()
-    # NaN values are droped because int dtype does not suppurt NaN values
-    dropedna_input_data = input_data.dropna()
+    # NaN values are dropped because int dtype does not support NaN values
+    droppedna_input_data = input_data.dropna()
     convert_scenario =  {
         "column": ["age", "score", "signup_date"],
         "datatype": ["int", "float", "datetime"],
         "format": ["", "", "%Y-%m-%d"]
     }
-    result = convert_datatype_userdefined(dropedna_input_data, convert_scenario=convert_scenario, verbose=True)
-    # Original data should remain unchanged, in this case NaN values are droped first
-    assert input_data.dropna().equals(dropedna_input_data)
+    result = convert_datatype_userdefined(droppedna_input_data, convert_scenario=convert_scenario, verbose=True)
+    # Original data should remain unchanged, in this case NaN values are dropped first
+    assert input_data.dropna().equals(droppedna_input_data)
     # Check the inferred data types
     assert pd.api.types.is_integer_dtype(result["age"])
     assert pd.api.types.is_float_dtype(result["score"])
@@ -495,31 +495,31 @@ def test_type_conversion_userdefined(sample_data):
 
 
 # ======================================= #
-#    feature encoding functions tests     #
+#     encode feature functions tests      #
 # ======================================= #
 
 # -------------Label Encoding------------ #
 
 def test_encode_feature_label_encoding_allcolumns(sample_data):
     input_data = sample_data.copy()
-    # NaN values are droped because int dtype does not suppurt NaN values
-    dropedna_input_data = input_data.dropna()
-    result = encode_feature(dropedna_input_data, feature_encoding_method=FeatureEncodingMethod.LABEL_ENCODING)
-    # Original data should remain unchanged, in this case NaN values are droped first
-    assert input_data.dropna().equals(dropedna_input_data)
-    # Check the the encoded columns only contains valid values
+    # NaN values are dropped because int dtype does not support NaN values
+    droppedna_input_data = input_data.dropna()
+    result = encode_feature(droppedna_input_data, feature_encoding_method=FeatureEncodingMethod.LABEL_ENCODING)
+    # Original data should remain unchanged, in this case NaN values are dropped first
+    assert input_data.dropna().equals(droppedna_input_data)
+    # Check if the encoded columns only contains valid values
     assert result["gender_encoded"].isin([0,1]).all()
     assert result["country_encoded"].isin(range(4)).all()
 
 def test_encode_feature_label_encoding_subsetcolumns(sample_data):
     input_data = sample_data.copy()
-    # NaN values are droped because int dtype does not suppurt NaN values
-    dropedna_input_data = input_data.dropna()
+    # NaN values are dropped because int dtype does not support NaN values
+    droppedna_input_data = input_data.dropna()
     columns_subset = ["gender"]
-    result = encode_feature(dropedna_input_data, feature_encoding_method=FeatureEncodingMethod.LABEL_ENCODING, columns_subset=columns_subset)
-    # Original data should remain unchanged, in this case NaN values are droped first
-    assert input_data.dropna().equals(dropedna_input_data)
-    # Check the the encoded columns only contains valid values
+    result = encode_feature(droppedna_input_data, feature_encoding_method=FeatureEncodingMethod.LABEL_ENCODING, columns_subset=columns_subset)
+    # Original data should remain unchanged, in this case NaN values are dropped first
+    assert input_data.dropna().equals(droppedna_input_data)
+    # Check if the encoded columns only contains valid values
     assert result["gender_encoded"].isin([0,1]).all()
     # Check other columns are not encoded
     assert not "country_encoded" in result.columns
@@ -528,25 +528,25 @@ def test_encode_feature_label_encoding_subsetcolumns(sample_data):
 
 def test_encode_feature_onehot_encoding_allcolumns(sample_data):
     input_data = sample_data.copy()
-    # NaN values are droped because int dtype does not suppurt NaN values
-    dropedna_input_data = input_data.dropna()
-    result = encode_feature(dropedna_input_data, feature_encoding_method=FeatureEncodingMethod.ONEHOT_ENCODING)
-    # Original data should remain unchanged, in this case NaN values are droped first
-    assert input_data.dropna().equals(dropedna_input_data)
-    # Check the the encoded columns only contains valid values
+    # NaN values are dropped because int dtype does not support NaN values
+    droppedna_input_data = input_data.dropna()
+    result = encode_feature(droppedna_input_data, feature_encoding_method=FeatureEncodingMethod.ONEHOT_ENCODING)
+    # Original data should remain unchanged, in this case NaN values are dropped first
+    assert input_data.dropna().equals(droppedna_input_data)
+    # Check if the encoded columns only contains valid values
     assert result["gender_Male"].isin([0,1]).all()
     assert result["gender_Female"].isin([0,1]).all()
     assert result["country_US"].isin([0,1]).all()
     
 def test_encode_feature_onehot_encoding_subsetcolumns(sample_data):
     input_data = sample_data.copy()
-    # NaN values are droped because int dtype does not suppurt NaN values
-    dropedna_input_data = input_data.dropna()
+    # NaN values are dropped because int dtype does not support NaN values
+    droppedna_input_data = input_data.dropna()
     columns_subset = ["gender"]
-    result = encode_feature(dropedna_input_data, feature_encoding_method=FeatureEncodingMethod.ONEHOT_ENCODING, columns_subset=columns_subset)
-    # Original data should remain unchanged, in this case NaN values are droped first
-    assert input_data.dropna().equals(dropedna_input_data)
-    # Check the the encoded columns only contains valid values
+    result = encode_feature(droppedna_input_data, feature_encoding_method=FeatureEncodingMethod.ONEHOT_ENCODING, columns_subset=columns_subset)
+    # Original data should remain unchanged, in this case NaN values are dropped first
+    assert input_data.dropna().equals(droppedna_input_data)
+    # Check if the encoded columns only contains valid values
     assert result["gender_Male"].isin([0,1]).all()
     assert result["gender_Female"].isin([0,1]).all()
     # Check other columns are not encoded
@@ -556,12 +556,12 @@ def test_encode_feature_onehot_encoding_subsetcolumns(sample_data):
 
 def test_encode_feature_hashing_allcolumns(sample_data):
     input_data = sample_data.copy()
-    # NaN values are droped because int dtype does not suppurt NaN values
-    dropedna_input_data = input_data.dropna()
-    result = encode_feature(dropedna_input_data, feature_encoding_method=FeatureEncodingMethod.HASHING)
-    # Original data should remain unchanged, in this case NaN values are droped first
-    assert input_data.dropna().equals(dropedna_input_data)
-    # Check the the encoded columns only contains valid values
+    # NaN values are dropped because int dtype does not support NaN values
+    droppedna_input_data = input_data.dropna()
+    result = encode_feature(droppedna_input_data, feature_encoding_method=FeatureEncodingMethod.HASHING)
+    # Original data should remain unchanged, in this case NaN values are dropped first
+    assert input_data.dropna().equals(droppedna_input_data)
+    # Check if the encoded columns only contains valid values
     print(result.columns)
     assert result["gender_col_0"].isin([-1,0,1]).all()
     assert result["country_col_0"].isin([-1,0,1]).all()
@@ -569,16 +569,66 @@ def test_encode_feature_hashing_allcolumns(sample_data):
     
 def test_encode_feature_hashing_subsetcolumns(sample_data):
     input_data = sample_data.copy()
-    # NaN values are droped because int dtype does not suppurt NaN values
-    dropedna_input_data = input_data.dropna()
+    # NaN values are dropped because int dtype does not support NaN values
+    droppedna_input_data = input_data.dropna()
     columns_subset = ["gender"]
-    result = encode_feature(dropedna_input_data, feature_encoding_method=FeatureEncodingMethod.HASHING, columns_subset=columns_subset)
-    # Original data should remain unchanged, in this case NaN values are droped first
-    assert input_data.dropna().equals(dropedna_input_data)
-    # Check the the encoded columns only contains valid values
+    result = encode_feature(droppedna_input_data, feature_encoding_method=FeatureEncodingMethod.HASHING, columns_subset=columns_subset)
+    # Original data should remain unchanged, in this case NaN values are dropped first
+    assert input_data.dropna().equals(droppedna_input_data)
+    # Check if the encoded columns only contains valid values
     assert result["gender_col_0"].isin([-1,0,1]).all()
     # Check other columns are not encoded
     assert not "country_col_0" in result.columns
+
+
+# ======================================= #
+#      scale feature functions tests      #
+# ======================================= #
+
+
+def test_scale_feature_minmax_scaling_l2normalization_false(sample_data):
+    input_data = sample_data.copy()
+    # NaN values are dropped because int dtype does not support NaN values
+    droppedna_input_data = input_data.dropna()
+    scaling_scenario = {
+            "column": ["age", "income", "score"],
+            "scaling_method": ["MINMAX_SCALING", "ROBUST_SCALING", "ZSCORE_STANDARDIZATION"]
+    }
+    result = scale_feature(droppedna_input_data,scaling_scenario=scaling_scenario)
+    # Original data should remain unchanged, in this case NaN values are dropped first
+    assert input_data.dropna().equals(droppedna_input_data)
+    # Check if minmax scaling result is between 0 and 1
+    assert all(result["age"] >= 0) and all(result["age"] <= 1)
+    # Check if after robust scaling --> median(result) == 0 and iqr(result) == 1
+    iqr_income = result["income"].quantile(0.75) - result["income"].quantile(0.25)
+    median_income = result["income"].median()
+    assert median_income == pytest.approx(0,1e-1)
+    assert iqr_income == pytest.approx(1,1e-1)
+    # Check if after zscore standardization --> mean(result) == 0 and str(result) == 1
+    mean_score = result["score"].mean()
+    std_score = result["score"].std()
+    assert mean_score ==  pytest.approx(0, 1e-1)
+    assert std_score == pytest.approx(1, 1e-1)
+
+
+def test_scale_feature_minmax_scaling_l2normalization_true(sample_data):
+    input_data = sample_data.copy()
+    # NaN values are dropped because int dtype does not support NaN values
+    droppedna_input_data = input_data.dropna()
+    scaling_scenario = {
+            "column": ["age", "income", "score"],
+            "scaling_method": ["MINMAX_SCALING", "ROBUST_SCALING", "ZSCORE_STANDARDIZATION"]
+    }
+    result = scale_feature(droppedna_input_data,scaling_scenario=scaling_scenario, apply_l2normalization=True)
+    # Original data should remain unchanged, in this case NaN values are dropped first
+    assert input_data.dropna().equals(droppedna_input_data)
+    # Check if minmax scaling result is between 0 and 1
+    assert all(result["age"] >= 0) and all(result["age"] <= 1)
+    # Check if after l2_normalization all numeric columns of the result shape a unit vector
+    numeric_columns = input_data.select_dtypes(include="number").columns.to_list()
+    # Calculate l2_norm of all samples
+    l2_norms = (result[numeric_columns]**2).sum(axis="columns")
+    assert np.allclose(l2_norms, 1, 1e-6)
 
 # ======================================= #
 #              Pipline Tests              #

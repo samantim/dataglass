@@ -113,6 +113,11 @@ def scale_feature(data : pd.DataFrame, scaling_scenario : Dict, apply_l2normaliz
     if not all(sm in [c.name for c in list(_ScalingMethod)] for sm in scaling_scenario["scaling_method"]):
         raise ValueError("At least one of the scaling methods provided in the scenario is not valid! The only acceptable data types are: {MINMAX_SCALING, ZSCORE_STANDARDIZATION, ROBUST_SCALING}")
 
+    if data[observing_columns].isna().sum().sum() > 0:
+        raise ValueError("Feature scaling does not work when the data contains NaN values.")
+
+    result = data.copy()
+
     # Create a list of tuples (column, scaling_method)
     scale_scenario_zipped = list(zip(observing_columns,scaling_scenario["scaling_method"]))
 
@@ -122,28 +127,28 @@ def scale_feature(data : pd.DataFrame, scaling_scenario : Dict, apply_l2normaliz
         match scaling_method:
             case _ScalingMethod.MINMAX_SCALING.name:
                 minmax_scaler = MinMaxScaler()
-                data[column] = minmax_scaler.fit_transform(data[[column]])
+                result[column] = minmax_scaler.fit_transform(result[[column]])
             case _ScalingMethod.ZSCORE_STANDARDIZATION.name:
                 zscore_standardization = StandardScaler()
-                data[column] = zscore_standardization.fit_transform(data[[column]])
+                result[column] = zscore_standardization.fit_transform(result[[column]])
             case _ScalingMethod.ROBUST_SCALING.name:
                 robust_scaler = RobustScaler()
-                data[column] = robust_scaler.fit_transform(data[[column]])
+                result[column] = robust_scaler.fit_transform(result[[column]])
 
     # If apply_l2normalization then we apply l2 normalization on all numeric columns of the dataset
     # Since this type of normalization only makes sense if it applies on all numeric columns
     if apply_l2normalization:
         l2_normalizer = Normalizer()
         # Extract all numeric columns
-        numeric_columns = data.select_dtypes("number")
+        numeric_columns = result.select_dtypes("number")
         data_transformed = l2_normalizer.fit_transform(numeric_columns)
         col_number = 0
         for col in numeric_columns.columns: 
             # Update dataset based on all numeric columns which are normalized
-            data[col] = data_transformed[:,col_number]
+            result[col] = data_transformed[:,col_number]
             col_number += 1 
 
-    return data
+    return result
 
 
 class ScaleFeatureStep(_PipelineStep):
