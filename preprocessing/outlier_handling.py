@@ -42,7 +42,7 @@ Functions:
 
 Classes:
 --------
-- `HandleOutliergStep`: A class implementing the `PipelineStep` interface for handling outlier values within a data pipeline.
+- `HandleOutlierStep`: A class implementing the `PipelineStep` interface for handling outlier values within a data pipeline.
 """
 import pandas as pd
 from enum import Enum

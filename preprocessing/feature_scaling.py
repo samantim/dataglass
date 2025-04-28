@@ -1,41 +1,39 @@
 """
-Type Conversion Module
+Feature Scaling Module
 =======================
 
-This module provides robust functionality for converting column datatypes in pandas DataFrames
-as part of a modular preprocessing pipeline. It supports both automatic inference and 
-user-defined conversion strategies to ensure that data types are clean, consistent, 
-and analysis-ready.
+This module provides a flexible framework for scaling and normalizing numeric features 
+within pandas DataFrames, designed to integrate seamlessly into modular preprocessing pipelines. 
+It supports a variety of scaling methods tailored to different data distributions, 
+and offers optional L2 normalization to normalize the magnitude of feature vectors.
 
 Core Features:
 --------------
-1. **Automatic Datatype Conversion**
-   - Converts object-type columns to numeric where possible.
-   - If numeric conversion fails, attempts datetime conversion.
-   - Leaves columns unchanged if neither is applicable.
+1. **Customizable Feature Scaling**
+   - Supports multiple scaling techniques: Min-Max Scaling, Z-Score Standardization, and Robust Scaling.
+   - Allows column-specific scaling strategies via user-defined scenarios.
+   - Handles scaling safely with built-in validation and informative error handling.
 
-2. **User-Defined Datatype Conversion**
-   - Allows precise control over datatype transformations via a structured scenario dictionary.
-   - Supports "int", "float", and "datetime" types, with optional format strings for datetime.
-   - Includes input validation and detailed error messaging for safe conversion.
+2. **Optional L2 Normalization**
+   - Applies L2 normalization across all numeric columns after scaling.
+   - Useful for machine learning models sensitive to feature vector magnitudes (e.g., SVM, k-NN).
 
 3. **Pipeline Integration**
-   - Implements the `TypeConversionStep` class conforming to the `PipelineStep` interface 
-     for streamlined integration into data preprocessing workflows.
+   - Implements the `ScaleFeatureStep` class that conforms to the `PipelineStep` interface 
+     for easy integration into preprocessing workflows.
 
 Enums:
 ------
-- `ConvertDatatypeMethod`: Enum defining the conversion strategy (`AUTO`, `USER_DEFINED`).
+- `_ScalingMethod`: Defines the available feature scaling strategies (MINMAX_SCALING, ZSCORE_STANDARDIZATION, or ROBUST_SCALING)
 
 Functions:
 ----------
-- `convert_datatype_auto`: Applies automatic datatype conversion to object-type columns.
-- `convert_datatype_userdefined`: Converts specified columns based on user-provided rules and formats.
+- `scale_feature`: Applies user-specified scaling methods to columns and optionally applies L2 normalization.
+- `_get_observing_columns`: Internal utility to validate and select numeric columns for scaling.
 
 Classes:
 --------
-- `TypeConversionStep`: A pipeline-compatible class that applies either automatic or user-defined 
-  datatype conversions to a DataFrame.
+- `ScaleFeatureStep`: Pipeline-compatible step for flexible feature scaling and normalization.
 """
 import pandas as pd
 from typing import Dict, List
@@ -59,6 +57,19 @@ class _ScalingMethod(Enum):
 
 
 def _get_observing_columns(data : pd.DataFrame, columns_subset : List) -> List:
+    """
+    Selects and validates numeric columns from the provided DataFrame for scaling.
+
+    Args:
+        data (pd.DataFrame): The input DataFrame.
+        columns_subset (List): List of column names to be scaled. If None or empty, all numeric columns are selected.
+
+    Returns:
+        List: Validated list of numeric columns to be processed.
+
+    Raises:
+        ValueError: If the columns_subset contains non-numeric columns or invalid names.
+    """
     # Prepare observing columns
     # Strip whitespaces
     if columns_subset: columns_subset = [col.strip() for col in columns_subset]
@@ -79,23 +90,24 @@ def _get_observing_columns(data : pd.DataFrame, columns_subset : List) -> List:
 
 def scale_feature(data : pd.DataFrame, scaling_scenario : Dict, apply_l2normalization : bool = False) -> pd.DataFrame:
     """
-    Applies specified scaling methods to given numeric columns and optionally applies L2 normalization.
+    Applies user-specified scaling methods to numeric features, with optional L2 normalization.
 
     Args:
-        data (pd.DataFrame): The input DataFrame.
-        scale_scenario (Dict): Dictionary specifying columns and their respective scaling methods.
+        data (pd.DataFrame): The input DataFrame containing numeric features.
+        scaling_scenario (Dict): A dictionary specifying the columns and corresponding scaling methods.
             Example:
             {
                 "column": ["Age", "Income"],
-                "scaling_method": ["MINMAX_SCALING", "ZSCORE_STANDARDIZATION"]
+                "scaling_method": ["MINMAX_SCALING", "ROBUST_SCALING"]
             }
-        apply_l2normalization (bool): Whether to apply L2 normalization to all numeric columns.
+            Supported scaling methods: {"MINMAX_SCALING", "ZSCORE_STANDARDIZATION", "ROBUST_SCALING"}.
+        apply_l2normalization (bool, optional): If True, applies L2 normalization across all numeric columns after scaling.
 
     Returns:
-        pd.DataFrame: The DataFrame with scaled and optionally normalized columns.
+        pd.DataFrame: DataFrame with scaled and optionally normalized features.
 
     Raises:
-        ValueError: If column names and scaling methods mismatch or if invalid methods are provided.
+        ValueError: If columns and scaling methods mismatch, invalid methods are provided, or NaN values are detected.
     """
     # Sample scale_scenario:
     # {"column":["High School Percentage", "Age"],
@@ -153,29 +165,32 @@ def scale_feature(data : pd.DataFrame, scaling_scenario : Dict, apply_l2normaliz
 
 class ScaleFeatureStep(_PipelineStep):
     """
-    Pipeline step for applying feature scaling and optional L2 normalization.
+    Pipeline step for applying feature scaling and optional L2 normalization to a DataFrame.
 
-    This class integrates with the DataPipeline system and enables users to define
-    column-specific scaling strategies using common methods such as MinMax, Z-Score,
-    and Robust scaling. It also supports optional L2 normalization applied across all
-    numeric features after initial scaling.
+    This class integrates with a modular DataPipeline system, enabling flexible column-wise
+    scaling strategies using common methods like MINMAX_SCALING, ZSCORE_STANDARDIZATION, and ROBUST_SCALING.
+    L2 normalization can optionally be applied across all numeric columns to standardize feature magnitudes.
 
     Parameters
     ----------
     scaling_scenario : Dict
-        A dictionary specifying the columns to be scaled and their associated methods.
+        A dictionary defining which columns to scale and the scaling method for each.
         Example:
             {
                 "column": ["Age", "Income"],
                 "scaling_method": ["MINMAX_SCALING", "ZSCORE_STANDARDIZATION"]
             }
-        Accepted methods are: "MINMAX_SCALING", "ZSCORE_STANDARDIZATION", "ROBUST_SCALING".
 
     apply_l2normalization : bool, optional
-        If True, applies L2 normalization across all numeric columns after scaling.
+        If True, performs L2 normalization on all numeric columns after the specified scaling. Default is False.
 
     verbose : bool, optional
-        If True, prints summary information before and after scaling (currently not implemented).
+        If True, it may print some details about the process.
+
+    Methods
+    -------
+    apply(data: pd.DataFrame) -> pd.DataFrame
+        Applies the defined scaling and normalization to the provided DataFrame.
     """
     def __init__(self, 
                 scaling_scenario : Dict,

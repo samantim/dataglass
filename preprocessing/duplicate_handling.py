@@ -2,35 +2,45 @@
 Duplicate Handling Module
 ==========================
 
-This module provides functionality for detecting and removing duplicate rows in pandas DataFrames 
-as part of a modular data preprocessing pipeline. It supports both exact and fuzzy duplicate detection 
-based on a similarity threshold.
+This module provides tools for detecting and removing duplicate rows in pandas DataFrames, 
+designed for integration into modular data preprocessing pipelines. It supports both exact 
+and fuzzy (approximate) duplicate detection based on customizable thresholds.
 
-Core Features:
---------------
+Core Features
+-------------
 1. **Exact Duplicate Removal**
-   - Identifies and removes fully identical rows using pandas' built-in `drop_duplicates` method.
+   - Removes fully identical rows.
+   - Optionally limits the check to specific columns.
 
 2. **Fuzzy Duplicate Removal**
-   - Detects and removes near-duplicate rows based on a similarity threshold using the RapidFuzz library.
-   - Compares text columns and retains only the most representative entry per group of similar rows.
+   - Identifies near-duplicate rows using string similarity scoring.
+   - Allows configurable similarity thresholds and subset of columns to focus matching.
+   - Retains the first detected entry and removes other similar rows.
 
 3. **Pipeline Integration**
-   - Includes the `HandleDuplicatesStep` class, which implements the `PipelineStep` interface for seamless integration 
-     into preprocessing pipelines.
+   - Includes `HandleDuplicateStep`, a class implementing the `PipelineStep` interface, 
+     enabling easy inclusion in broader machine learning or data cleaning workflows.
 
-Enums:
-------
-- `HandleDuplicateMethod`: Defines handle duplicate method. It has `EXACT` and `FUZZY` modes.
+Enums
+-----
+- `HandleDuplicateMethod` : Enum specifying duplicate handling methods (`EXACT` or `FUZZY`).
 
-Functions:
-----------
-- `handle_duplicates_exact`: Removes exact duplicate rows from the DataFrame.
-- `handle_duplicates_fuzzy`: Identifies and removes fuzzy duplicates based on string similarity.
+Functions
+---------
+- `handle_duplicate_values_exact(data, columns_subset=None, verbose=False)`
+    Removes fully identical rows from a DataFrame.
+- `handle_duplicate_values_fuzzy(data, columns_subset=None, similarity_thresholds=None, verbose=False)`
+    Detects and removes near-duplicates based on average text similarity.
 
-Classes:
---------
-- `HandleDuplicateStep`: A class implementing the `PipelineStep` interface for handling duplicates within a data pipeline.
+Classes
+-------
+- `HandleDuplicateStep`
+    A configurable pipeline step for applying exact or fuzzy duplicate handling.
+
+Notes
+-----
+- Fuzzy matching has quadratic time complexity (O(n²)); it can be slow on large datasets (>10,000 rows).
+- Preprocessing such as text normalization or column selection can improve fuzzy matching accuracy.
 """
 import pandas as pd
 import numpy as np
@@ -54,28 +64,33 @@ class HandleDuplicateMethod(Enum):
 
 def handle_duplicate_values_exact(data : pd.DataFrame, columns_subset : List = None, verbose : bool = False) -> pd.DataFrame:
     """
-    Removes exact duplicate rows from a DataFrame.
+    Remove exact duplicate rows from a pandas DataFrame.
 
     Parameters
     ----------
     data : pd.DataFrame
-        The input DataFrame to be cleaned.
+        The input DataFrame to clean.
     columns_subset : list of str, optional
-        List of column names to consider when identifying duplicates.
+        Columns to consider when checking for duplicates.
         If None, all columns are used.
     verbose : bool, default=False
-        If True, prints information before and after removing duplicates,
-        including a sample of the duplicate rows.
+        If True, displays the number of duplicates found, 
+        a sample of duplicate rows, and the dataset size before and after removal.
 
     Returns
     -------
     pd.DataFrame
-        A DataFrame with exact duplicates removed, keeping the first occurrence.
+        A DataFrame with exact duplicates removed, keeping the first occurrence in each group.
 
     Raises
     ------
     ValueError
-        If the provided subset contains invalid column names.
+        If any specified columns in `columns_subset` do not exist in the input DataFrame.
+
+    Notes
+    -----
+    - Only fully identical rows across the selected columns are treated as duplicates.
+    - Leading/trailing whitespace in column names is automatically stripped.
     """
     # Display dataset info before and after imputation if verbose is enabled
     # Check dataset to know how many duplicate values exist
@@ -86,7 +101,7 @@ def handle_duplicate_values_exact(data : pd.DataFrame, columns_subset : List = N
         if columns_subset: 
             columns_subset = [col.strip() for col in columns_subset]
             data[columns_subset]
-    except:
+    except (KeyError, TypeError):
         raise ValueError("The columns subset is not valid!")
     
     # Find duplicate values
@@ -105,44 +120,45 @@ def handle_duplicate_values_exact(data : pd.DataFrame, columns_subset : List = N
 
     # Check dataset rows after removing duplicate rows
     if verbose:
-        print(f"Dataset has {data.shape[0]} rows before handling duplicate values.")
+        print(f"Dataset has {data.shape[0]} rows after handling duplicate values.")
 
     return data
 
 
 def handle_duplicate_values_fuzzy(data : pd.DataFrame, columns_subset : List = None, similarity_thresholds : Tuple = None, verbose : bool = False) -> pd.DataFrame:
     """
-    Removes fuzzy duplicate rows from a DataFrame based on average string similarity across selected columns.
+    Remove fuzzy (approximate) duplicate rows based on string similarity across specified columns.
 
     Parameters
     ----------
     data : pd.DataFrame
-        The input DataFrame to be cleaned.
+        The input DataFrame to clean.
     columns_subset : list of str, optional
-        List of column names to consider for fuzzy comparison. 
+        Columns to use for similarity comparisons. 
         If None, all columns are used.
-    similarity_thresholds : tuple of int (min, max), optional
-        Tuple representing the minimum and maximum average similarity ratio (0-100) 
-        required to consider two rows as duplicates.
+    similarity_thresholds : tuple (min_similarity: int, max_similarity: int), optional
+        A tuple defining the range of average similarity scores (0-100) for considering two rows duplicates.
         Defaults to (90, 100).
     verbose : bool, default=False
-        If True, prints detailed information including the number of duplicates 
-        detected and sample output before and after removal.
+        If True, displays detailed information including number of duplicates found, 
+        sample outputs, and dataset size before and after removal.
 
     Returns
     -------
     pd.DataFrame
-        A DataFrame with fuzzy duplicates removed, keeping one representative from each group.
+        A DataFrame with fuzzy duplicates removed, keeping the first occurrence in each group.
 
     Raises
     ------
     ValueError
-        If the provided subset contains invalid column names.
+        If any specified columns in `columns_subset` do not exist in the input DataFrame.
 
     Notes
     -----
-    This method compares all row pairs, so it may be slow for large datasets 
-    due to its O(n^2) complexity.
+    - The algorithm has O(n²) complexity; may be slow for datasets with many rows.
+    - Preprocessing steps like lowercasing and stripping whitespace are automatically applied to strings.
+    - Works best when applied to text/categorical columns.
+    - If `similarity_thresholds = (100, 100)`, the behavior approximates exact duplicate detection.
     """
     # Display dataset info before and after imputation if verbose is enabled
     # Note that if similarity_thresholds(100,100) is given to the function, the results are identical to handle_duplicate_values_drop() function
@@ -153,7 +169,7 @@ def handle_duplicate_values_fuzzy(data : pd.DataFrame, columns_subset : List = N
         if columns_subset: 
             columns_subset = [col.strip() for col in columns_subset]
             data[columns_subset]
-    except:
+    except (KeyError, TypeError):
         raise ValueError("The columns subset is not valid!")
     
     # If similarity_thresholds is not passed to the function it will be considered as (90,100)
@@ -175,7 +191,7 @@ def handle_duplicate_values_fuzzy(data : pd.DataFrame, columns_subset : List = N
             # The result is stored in ratios list
             column_similarity_ratios.append(fuzz.ratio(str(data.loc[i, col]).lower().strip(), str(data.loc[j, col]).lower().strip()))
         
-        # Average of similarity ratios of all column is caculated.
+        # # Average of similarity ratios of all columns is calculated.
         rows_similarity_avg_ratio = sum(column_similarity_ratios)/len(column_similarity_ratios)
         # If the result is in range, those rows will be considered as duplicates
         if similarity_thresholds[0] <= rows_similarity_avg_ratio <= similarity_thresholds[1]:
@@ -238,27 +254,32 @@ def handle_duplicate_values_fuzzy(data : pd.DataFrame, columns_subset : List = N
 
 class HandleDuplicateStep(_PipelineStep):
     """
-    A pipeline step for handling duplicate values in a DataFrame.
+    Pipeline step for detecting and removing duplicate rows from a pandas DataFrame.
 
-    This step supports both exact and fuzzy duplicate removal, depending on the specified method.
+    Supports both exact and fuzzy duplicate handling depending on the specified method.
 
     Parameters
     ----------
     handle_duplicate_method : HandleDuplicateMethod
-        The method to use for detecting and removing duplicates (EXACT or FUZZY).
+        The method to use: `EXACT` for full match, `FUZZY` for approximate matching.
     columns_subset : list of str, optional
-        Column names to consider when identifying duplicates.
-        If None, all columns are considered.
-    similarity_thresholds : tuple of int, optional
-        For fuzzy duplicate detection, a tuple (min, max) defining the average similarity threshold between rows.
-        Only used when `handle_duplicate_method` is FUZZY.
+        Specific columns to use for duplicate detection.
+        If None, all columns are used.
+    similarity_thresholds : tuple (min_similarity: int, max_similarity: int), optional
+        Range of average similarity ratios for considering rows as fuzzy duplicates.
+        Only applicable when `handle_duplicate_method` is `FUZZY`.
     verbose : bool, default=False
-        If True, prints details before and after handling duplicates.
+        If True, logs information on duplicates before and after removal.
 
     Methods
     -------
     apply(data: pd.DataFrame) -> pd.DataFrame
-        Applies the selected duplicate handling method to the DataFrame.
+        Apply the configured duplicate handling method to the input DataFrame.
+
+    Notes
+    -----
+    - Designed for integration into custom data processing pipelines.
+    - Fuzzy duplicate detection can significantly slow down processing on large datasets.
     """
     def __init__(self, 
                 handle_duplicate_method : HandleDuplicateMethod,

@@ -563,9 +563,9 @@ def test_encode_feature_hashing_allcolumns(sample_data):
     assert input_data.dropna().equals(droppedna_input_data)
     # Check if the encoded columns only contains valid values
     print(result.columns)
-    assert result["gender_col_0"].isin([-1,0,1]).all()
-    assert result["country_col_0"].isin([-1,0,1]).all()
-    assert result["country_col_1"].isin([-1,0,1]).all()
+    assert result["gender_hash_0"].isin([-1,0,1]).all()
+    assert result["country_hash_0"].isin([-1,0,1]).all()
+    assert result["country_hash_1"].isin([-1,0,1]).all()
     
 def test_encode_feature_hashing_subsetcolumns(sample_data):
     input_data = sample_data.copy()
@@ -576,9 +576,9 @@ def test_encode_feature_hashing_subsetcolumns(sample_data):
     # Original data should remain unchanged, in this case NaN values are dropped first
     assert input_data.dropna().equals(droppedna_input_data)
     # Check if the encoded columns only contains valid values
-    assert result["gender_col_0"].isin([-1,0,1]).all()
+    assert result["gender_hash_0"].isin([-1,0,1]).all()
     # Check other columns are not encoded
-    assert not "country_col_0" in result.columns
+    assert not "country_hash_0" in result.columns
 
 
 # ======================================= #

@@ -93,9 +93,9 @@ def convert_datatype_auto(data : pd.DataFrame, verbose : bool = False) -> pd.Dat
 
         try:
             # Ignore warnings
-            warnings.simplefilter("ignore")
-            if not pd.api.types.is_numeric_dtype(result[col]):
-                result[col] = pd.to_datetime(result[col])
+            with warnings.catch_warnings(action="ignore"):
+                if not pd.api.types.is_numeric_dtype(result[col]):
+                    result[col] = pd.to_datetime(result[col])
         except:
             pass
 
