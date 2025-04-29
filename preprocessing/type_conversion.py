@@ -2,39 +2,39 @@
 Type Conversion Module
 =======================
 
-This module provides functionality for converting column datatypes in pandas DataFrames 
-as part of a modular data preprocessing pipeline. It includes automatic and user-defined 
-conversion strategies to ensure that data types are appropriate for downstream analysis 
-and modeling tasks.
+This module provides functionality to convert column datatypes in pandas DataFrames, 
+either automatically or based on user-defined scenarios. It is designed to be integrated 
+into modular data preprocessing pipelines and ensures that datatypes are appropriate 
+for modeling, analysis, and feature engineering.
 
 Core Features:
 --------------
 1. **Automatic Datatype Conversion**
-   - Attempts to convert object-type columns to numeric. If that fails, tries datetime conversion.
-   - Columns that cannot be converted remain unchanged.
+   - Automatically converts object-type columns to numeric (int or float) if possible.
+   - If numeric conversion fails, attempts to convert to datetime.
+   - Leaves non-convertible columns unchanged.
 
 2. **User-Defined Datatype Conversion**
-   - Allows users to define a specific conversion scenario including column names, target data types 
-     (int, float, datetime), and optional datetime formats.
-   - Ensures accurate type transformation with validation and error handling.
+   - Enables explicit datatype conversion for selected columns.
+   - Supports conversion to int, float, or datetime (with custom format strings).
+   - Includes extensive error handling and validation.
 
 3. **Pipeline Integration**
-   - Includes the `TypeConversionStep` class, which implements the `PipelineStep` interface 
-     for seamless integration into preprocessing pipelines.
+   - Includes `TypeConversionStep`, which implements `_PipelineStep` for integration into 
+     end-to-end data pipelines.
 
 Enums:
 ------
-- `ConvertDatatypeMethod`: Defines strategies for datatype conversion (AUTO or USER_DEFINED).
+- `ConvertDatatypeMethod`: Strategy enum — AUTO or USER_DEFINED.
 
 Functions:
 ----------
-- `convert_datatype_auto`: Converts object-type columns to numeric or datetime using automatic inference.
-- `convert_datatype_userdefined`: Converts specified columns to target datatypes based on a provided scenario dictionary.
+- `convert_datatype_auto`: Automatically infers and converts object-type columns.
+- `convert_datatype_userdefined`: Converts columns to target datatypes based on a user-specified scenario.
 
 Classes:
 --------
-- `TypeConversionStep`: A class implementing the `PipelineStep` interface for converting column datatypes 
-  within a data pipeline.
+- `TypeConversionStep`: Pipeline-compatible class for orchestrating datatype conversion.
 """
 import pandas as pd
 from typing import Dict
@@ -44,11 +44,11 @@ import warnings
 
 class ConvertDatatypeMethod(Enum):
     """
-    Enum for specifying the method to convert data types.
+    Enum for specifying the strategy used to convert data types.
 
-    Attributes:
-        AUTO (int): Automatically infers and converts data types based on the input data.
-        USER_DEFINED (int): Converts data types based on user-provided convert scenario.
+    Options:
+        AUTO (int): Automatically infers and converts data types based on content heuristics.
+        USER_DEFINED (int): Applies datatype conversions based on an explicit user-provided specification.
     """
     AUTO = 1
     USER_DEFINED = 2
@@ -56,17 +56,24 @@ class ConvertDatatypeMethod(Enum):
 
 def convert_datatype_auto(data : pd.DataFrame, verbose : bool = False) -> pd.DataFrame:
     """
-    Automatically attempts to convert object-type columns to numeric or datetime types.
+    Automatically attempts to convert object-type columns to numeric (int/float) or datetime types.
 
-    It first tries to convert object-type columns to numeric. If that fails, it attempts to convert 
-    them to datetime. Columns that cannot be converted remain unchanged.
+    Conversion Logic:
+        - If a column is of object dtype, try converting to numeric.
+        - If the column is numeric with no fractional values, downcast float to int.
+        - If numeric conversion fails, attempt to convert to datetime.
+        - Columns that cannot be converted remain unchanged.
 
-    Args:
-        data (pd.DataFrame): Input DataFrame to process.
-        verbose (bool, optional): If True, prints datatypes before and after conversion. Defaults to False.
+    Parameters:
+        data (pd.DataFrame): The input DataFrame to process.
+        verbose (bool, optional): If True, prints datatypes before and after conversion.
 
     Returns:
-        pd.DataFrame: DataFrame with updated datatypes where conversions were successful.
+        pd.DataFrame: A new DataFrame with updated datatypes where applicable.
+
+    Notes:
+        - Invalid conversions are silently skipped.
+        - Integer casting only occurs when it is safe (i.e., all values are whole numbers).
     """
     # Display dataset info before and after imputation if verbose is enabled
     # Show the data types before applying any conversion
@@ -108,27 +115,37 @@ def convert_datatype_auto(data : pd.DataFrame, verbose : bool = False) -> pd.Dat
 
 def convert_datatype_userdefined(data : pd.DataFrame, convert_scenario : Dict, verbose : bool = False) -> pd.DataFrame:
     """
-    Converts specific columns in a DataFrame to user-defined data types based on a provided scenario.
+    Converts specified columns in a DataFrame to target datatypes using a user-defined scenario.
 
-    The scenario dictionary must include the column names, target data types ("int", "float", "datetime"),
-    and an optional format string (required for datetime conversion).
+    The `convert_scenario` must include:
+        - "column": list of column names to convert
+        - "datatype": list of target datatypes ("int", "float", "datetime")
+        - "format": list of format strings (only for datetime; use "" otherwise)
 
-    Args:
-        data (pd.DataFrame): Input DataFrame to convert.
-        convert_scenario (Dict): Dictionary with keys "column", "datatype", and "format". Example:
+    Parameters:
+        data (pd.DataFrame): The input DataFrame.
+        convert_scenario (Dict): A dict defining conversion rules. Example:
             {
-                "column": ["Score", "Date"],
-                "datatype": ["float", "datetime"],
+                "column": ["Age", "Start Date"],
+                "datatype": ["int", "datetime"],
                 "format": ["", "%Y-%m-%d"]
             }
-        verbose (bool, optional): If True, prints datatypes before and after conversion. Defaults to False.
-
-    Raises:
-        ValueError: If a column is missing, type is unsupported, or format is misused.
-        ValueError: If any conversion fails.
+        verbose (bool, optional): If True, prints datatypes before and after conversion.
 
     Returns:
-        pd.DataFrame: DataFrame with columns converted according to the provided scenario.
+        pd.DataFrame: A DataFrame with updated column datatypes as defined.
+
+    Raises:
+        ValueError:
+            - If any listed column does not exist.
+            - If unsupported datatypes are specified.
+            - If datetime format is missing or incorrectly applied.
+            - If any actual conversion fails due to data inconsistency.
+
+    Notes:
+        - Leading/trailing whitespaces in the scenario values are stripped.
+        - Only "int", "float", and "datetime" datatypes are supported.
+        - Format strings are required for datetime and must follow ISO 8601 standards.
     """
     # Sample conver_scenario:
     # {"column":["High School Percentage", "Test Date"],
@@ -193,25 +210,34 @@ def convert_datatype_userdefined(data : pd.DataFrame, convert_scenario : Dict, v
 
 class TypeConversionStep(_PipelineStep):
     """
-    Pipeline step for converting column datatypes using either automatic inference 
-    or user-defined rules.
+    A pipeline-compatible step for column datatype conversion.
 
-    This class integrates with the DataPipeline system and allows users to standardize
-    column types, which is critical for analysis and modeling. It supports:
-    - Automatic conversion of object-type columns to numeric or datetime.
-    - Manual conversion using user-defined column, type, and format specifications.
+    Facilitates datatype standardization in a preprocessing pipeline. Supports both
+    automatic and user-defined conversion strategies. Integrates seamlessly into
+    modular data pipelines for feature engineering and modeling.
 
     Parameters
     ----------
     convert_datatype_method : ConvertDatatypeMethod
-        Strategy for converting datatypes. Options: AUTO or USER_DEFINED.
-    convert_scenario : Dict
-        Required if `convert_datatype_method` is USER_DEFINED. Should include:
-            - "column": list of column names,
-            - "datatype": list of target datatypes ("int", "float", "datetime"),
-            - "format": list of datetime formats (use empty string for non-datetime).
+        Strategy for conversion: AUTO (automatic inference) or USER_DEFINED (explicit mapping).
+    
+    convert_scenario : Dict, optional
+        Required if using USER_DEFINED method. Should include:
+            - "column": list of column names
+            - "datatype": list of target datatypes ("int", "float", "datetime")
+            - "format": list of datetime formats ("" for non-datetime columns)
+
     verbose : bool, optional
-        If True, prints datatype information before and after conversion.
+        If True, prints datatypes before and after conversion.
+
+    Methods
+    -------
+    apply(data: pd.DataFrame) -> pd.DataFrame
+        Executes the datatype conversion on the provided DataFrame.
+
+    Raises
+    ------
+    ValueError: If parameters are missing or invalid in USER_DEFINED mode.
     """
     def __init__(self, 
                 convert_datatype_method : ConvertDatatypeMethod,
