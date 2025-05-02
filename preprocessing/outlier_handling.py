@@ -61,11 +61,16 @@ class DetectOutlierMethod(Enum):
     """
     Enumeration for supported outlier detection techniques.
 
-    Options:
-        IQR (int): Uses the Interquartile Range rule to detect outliers.
-        ZSCORE (int): Identifies points outside 3 standard deviations from the mean.
-        ISOLATION_FOREST (int): Detects anomalies using tree-based model.
-        LOCAL_OUTLIER_FACTOR (int): Identifies local density deviations using LOF.
+    Attributes
+    ----------
+        IQR: int
+            Uses the Interquartile Range rule to detect outliers.
+        ZSCORE: int
+            Identifies points outside 3 standard deviations from the mean.
+        ISOLATION_FOREST: int
+            Detects anomalies using tree-based model.
+        LOCAL_OUTLIER_FACTOR: int
+            Identifies local density deviations using LOF.
     """
     IQR = 1
     ZSCORE = 2
@@ -77,10 +82,14 @@ class HandleOutlierMethod(Enum):
     """
     Enumeration for supported strategies to handle detected outliers.
 
-    Options:
-        DROP (int): Remove rows containing any outliers.
-        REPLACE_WITH_MEDIAN (int): Replace outlier values with the column median.
-        CAP_WITH_BOUNDARIES (int): Clip outlier values to calculated lower/upper bounds.
+    Attributes
+    ----------
+        DROP: int
+            Remove rows containing any outliers.
+        REPLACE_WITH_MEDIAN: int
+            Replace outlier values with the column median.
+        CAP_WITH_BOUNDARIES: int
+            Clip outlier values to calculated lower/upper bounds.
     """
     DROP = 1
     REPLACE_WITH_MEDIAN = 2
@@ -95,16 +104,21 @@ def _get_observing_columns(data : pd.DataFrame, columns_subset : List) -> List:
     (if provided), ensuring only numeric columns are considered for further analysis. 
     If no subset is given, all numeric columns in the DataFrame are selected.
 
-    Parameters:
+    Parameters
+    ----------
         data (pd.DataFrame): The input DataFrame from which to select columns.
         columns_subset (List): A list of column names to use for outlier detection.
             If None or empty, all numeric columns in the DataFrame are selected.
 
-    Returns:
-        List: A list of valid numeric column names to be used in outlier detection.
+    Returns
+    ----------
+        List: 
+            A list of valid numeric column names to be used in outlier detection.
 
-    Raises:
-        ValueError: If the specified subset includes non-numeric columns or invalid column names.
+    Raises
+    ----------
+        ValueError: 
+            If the specified subset includes non-numeric columns or invalid column names.
     """
     # Prepare observing columns
 
@@ -134,7 +148,8 @@ def detect_outliers(data : pd.DataFrame, detect_outlier_method : DetectOutlierMe
     """
     Detects outliers in specified numeric columns using the selected method.
 
-    Parameters:
+    Parameters
+    ----------
         data (pd.DataFrame): Input DataFrame.
         detect_outlier_method (DetectOutlierMethod): Outlier detection technique to use (IQR, ZSCORE, ISOLATION_FOREST, LOCAL_OUTLIER_FACTOR).
         columns_subset (List, optional): Subset of columns to process. Defaults to all numeric columns.
@@ -142,13 +157,16 @@ def detect_outliers(data : pd.DataFrame, detect_outlier_method : DetectOutlierMe
         n_neighbors (int, optional): Number of neighbors for LOF. Reasonable range: 25-30% of samples.
         per_column_detection (bool, optional): If True, applies model to each column independently. It is only recommended for experiment and comparison, since it does not make sense for real-world scenarios.
 
-    Returns:
-        Tuple:
-            - outliers (Dict): Column-wise index lists of detected outliers.
-            - boundaries (Dict): Column-wise (lower, upper) boundaries for inliers.
+    Returns
+    ----------
+        Tuple (Dict, Dict)
+            - outliers: Column-wise index lists of detected outliers.
+            - boundaries: Column-wise (lower, upper) boundaries for inliers.
 
-    Raises:
-        ValueError: If parameters are invalid or method cannot handle missing values.
+    Raises
+    ----------
+        ValueError
+            If parameters are invalid or method cannot handle missing values.
     """
     # Parameter contamination_rate is used for training ISOLATION FOREST LOCAL OUTLIER FACTOR methods to set the boundaries for outliers
     # Parameter n_neighbors is used for training OUTLIER FACTOR methods to set the number of observing neighbors
@@ -266,18 +284,23 @@ def handle_outliers(data : pd.DataFrame, handle_outlier_method : HandleOutlierMe
     """
     Handles previously detected outliers using a specified strategy.
 
-    Parameters:
+    Parameters
+    ----------
         data (pd.DataFrame): Input DataFrame.
         handle_outlier_method (HandleOutlierMethod): Strategy to apply (DROP, REPLACE_WITH_MEDIAN, CAP_WITH_BOUNDARIES).
         outliers (Dict): Dictionary mapping column names to outlier row indices.
         boundaries (Dict): Column-wise (lower, upper) values to cap outliers.
         verbose (bool): If True, prints diagnostics before and after processing.
 
-    Returns:
-        pd.DataFrame: Cleaned DataFrame with handled outliers.
+    Returns
+    ----------
+        pd.DataFrame
+            Cleaned DataFrame with handled outliers.
 
-    Raises:
-        KeyError: If column names in `outliers` or `boundaries` are not present in the DataFrame.
+    Raises
+    ----------
+        KeyError
+            If column names in `outliers` or `boundaries` are not present in the DataFrame.
     """
     # Display dataset info before and after imputation if verbose is enabled
     # If the outlier dict is empty, the output is the original data
@@ -332,7 +355,8 @@ def visualize_outliers(original_data : pd.DataFrame, cleaned_data : pd.DataFrame
 
     Produces a series of side-by-side boxplots and histograms for each column before and after handling.
 
-    Parameters:
+    Parameters
+    ----------
         original_data (pd.DataFrame): Data before outlier handling.
         cleaned_data (pd.DataFrame): Data after outlier handling.
         output_dir (str): Directory where visualizations will be saved.
@@ -340,7 +364,8 @@ def visualize_outliers(original_data : pd.DataFrame, cleaned_data : pd.DataFrame
         handle_outlier_method (HandleOutlierMethod): Handling method (DROP, REPLACE_WITH_MEDIAN, CAP_WITH_BOUNDARIES). It is only used in file naming.
         columns_subset (List, optional): Subset of columns to visualize. Defaults to all numeric.
 
-    Returns:
+    Returns
+    ----------
         None
     """
     # Check if column_subset is valid
@@ -386,7 +411,8 @@ class HandleOutlierStep(_PipelineStep):
     Integrates outlier detection and handing within a pipeline. Supports multiple detection
     and handling methods with configurable scope and verbosity.
 
-    Parameters:
+    Parameters
+    ----------
         detect_outlier_method (DetectOutlierMethod): Method for outlier detection (IQR, ZSCORE, ISOLATION_FOREST, LOCAL_OUTLIER_FACTOR).
         handle_outlier_method (HandleOutlierMethod): Strategy for handling detected outliers (DROP, REPLACE_WITH_MEDIAN, CAP_WITH_BOUNDARIES).
         columns_subset (List, optional): List of columns to inspect. Defaults to all numeric.
@@ -397,7 +423,7 @@ class HandleOutlierStep(_PipelineStep):
 
     Methods
     -------
-    apply(data: pd.DataFrame) -> pd.DataFrame
+    apply(data: pd.DataFrame) -> pd.DataFrame:
             Executes the outlier detection and handling pipeline step.
     """
     def __init__(self, 

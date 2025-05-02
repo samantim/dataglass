@@ -46,10 +46,14 @@ class _ScalingMethod(Enum):
     """
     Enumeration of supported feature scaling methods.
 
-    Attributes:
-        MINMAX_SCALING: Scales features to a given range (default [0, 1]).
-        ZSCORE_STANDARDIZATION: Standardizes features by removing the mean and scaling to standard deviation.
-        ROBUST_SCALING: Scales features using statistics that are robust to outliers (median and IQR).
+    Attributes
+    ----------
+        MINMAX_SCALING: int
+            Scales features to a given range (default [0, 1]).
+        ZSCORE_STANDARDIZATION: int
+            Standardizes features by removing the mean and scaling to standard deviation.
+        ROBUST_SCALING: int
+            Scales features using statistics that are robust to outliers (median and IQR).
     """
     MINMAX_SCALING = 1
     ZSCORE_STANDARDIZATION = 2
@@ -60,15 +64,20 @@ def _get_observing_columns(data : pd.DataFrame, columns_subset : List) -> List:
     """
     Selects and validates numeric columns from the provided DataFrame for scaling.
 
-    Args:
+    Parameters
+    ----------
         data (pd.DataFrame): The input DataFrame.
         columns_subset (List): List of column names to be scaled. If None or empty, all numeric columns are selected.
 
-    Returns:
-        List: Validated list of numeric columns to be processed.
+    Returns
+    -------
+        List: 
+            Validated list of numeric columns to be processed.
 
-    Raises:
-        ValueError: If the columns_subset contains non-numeric columns or invalid names.
+    Raises
+    ------
+        ValueError: 
+            If the columns_subset contains non-numeric columns or invalid names.
     """
     # Prepare observing columns
     # Strip whitespaces
@@ -92,7 +101,8 @@ def scale_feature(data : pd.DataFrame, scaling_scenario : Dict, apply_l2normaliz
     """
     Applies user-specified scaling methods to numeric features, with optional L2 normalization.
 
-    Args:
+    Parameters
+    ----------
         data (pd.DataFrame): The input DataFrame containing numeric features.
         scaling_scenario (Dict): A dictionary specifying the columns and corresponding scaling methods.
             Example:
@@ -103,11 +113,15 @@ def scale_feature(data : pd.DataFrame, scaling_scenario : Dict, apply_l2normaliz
             Supported scaling methods: {"MINMAX_SCALING", "ZSCORE_STANDARDIZATION", "ROBUST_SCALING"}.
         apply_l2normalization (bool, optional): If True, applies L2 normalization across all numeric columns after scaling.
 
-    Returns:
-        pd.DataFrame: DataFrame with scaled and optionally normalized features.
+    Returns
+    -------
+        pd.DataFrame
+            DataFrame with scaled and optionally normalized features.
 
-    Raises:
-        ValueError: If columns and scaling methods mismatch, invalid methods are provided, or NaN values are detected.
+    Raises
+    -------
+        ValueError
+            If columns and scaling methods mismatch, invalid methods are provided, or NaN values are detected.
     """
     # Sample scale_scenario:
     # {"column":["High School Percentage", "Age"],
@@ -189,7 +203,7 @@ class ScaleFeatureStep(_PipelineStep):
 
     Methods
     -------
-    apply(data: pd.DataFrame) -> pd.DataFrame
+    apply(data: pd.DataFrame) -> pd.DataFrame:
         Applies the defined scaling and normalization to the provided DataFrame.
     """
     def __init__(self, 

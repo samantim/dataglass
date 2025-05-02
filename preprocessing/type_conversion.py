@@ -46,9 +46,12 @@ class ConvertDatatypeMethod(Enum):
     """
     Enum for specifying the strategy used to convert data types.
 
-    Options:
-        AUTO (int): Automatically infers and converts data types based on content heuristics.
-        USER_DEFINED (int): Applies datatype conversions based on an explicit user-provided specification.
+    Attributes
+    ----------
+        AUTO: int
+            Automatically infers and converts data types based on content heuristics.
+        USER_DEFINED: int
+            Applies datatype conversions based on an explicit user-provided specification.
     """
     AUTO = 1
     USER_DEFINED = 2
@@ -58,22 +61,26 @@ def convert_datatype_auto(data : pd.DataFrame, verbose : bool = False) -> pd.Dat
     """
     Automatically attempts to convert object-type columns to numeric (int/float) or datetime types.
 
-    Conversion Logic:
-        - If a column is of object dtype, try converting to numeric.
-        - If the column is numeric with no fractional values, downcast float to int.
-        - If numeric conversion fails, attempt to convert to datetime.
-        - Columns that cannot be converted remain unchanged.
-
-    Parameters:
+    Parameters
+    ----------
         data (pd.DataFrame): The input DataFrame to process.
         verbose (bool, optional): If True, prints datatypes before and after conversion.
 
-    Returns:
+    Returns
+    ----------
         pd.DataFrame: A new DataFrame with updated datatypes where applicable.
 
-    Notes:
-        - Invalid conversions are silently skipped.
-        - Integer casting only occurs when it is safe (i.e., all values are whole numbers).
+    Notes
+    ----------
+    - Invalid conversions are silently skipped.
+    - Integer casting only occurs when it is safe (i.e., all values are whole numbers).
+    
+    Conversion Logic
+    ----------
+    - If a column is of object dtype, try converting to numeric.
+    - If the column is numeric with no fractional values, downcast float to int.
+    - If numeric conversion fails, attempt to convert to datetime.
+    - Columns that cannot be converted remain unchanged.
     """
     # Display dataset info before and after imputation if verbose is enabled
     # Show the data types before applying any conversion
@@ -117,35 +124,35 @@ def convert_datatype_userdefined(data : pd.DataFrame, convert_scenario : Dict, v
     """
     Converts specified columns in a DataFrame to target datatypes using a user-defined scenario.
 
-    The `convert_scenario` must include:
-        - "column": list of column names to convert
-        - "datatype": list of target datatypes ("int", "float", "datetime")
-        - "format": list of format strings (only for datetime; use "" otherwise)
-
-    Parameters:
+    Parameters
+    ----------
         data (pd.DataFrame): The input DataFrame.
         convert_scenario (Dict): A dict defining conversion rules. Example:
-            {
-                "column": ["Age", "Start Date"],
-                "datatype": ["int", "datetime"],
-                "format": ["", "%Y-%m-%d"]
-            }
+        {
+            "column": ["Age", "Start Date"],
+            "datatype": ["int", "datetime"],
+            "format": ["", "%Y-%m-%d"]
+        }
         verbose (bool, optional): If True, prints datatypes before and after conversion.
 
-    Returns:
-        pd.DataFrame: A DataFrame with updated column datatypes as defined.
+    Returns
+    ----------
+        pd.DataFrame
+            A DataFrame with updated column datatypes as defined.
 
-    Raises:
-        ValueError:
-            - If any listed column does not exist.
-            - If unsupported datatypes are specified.
-            - If datetime format is missing or incorrectly applied.
-            - If any actual conversion fails due to data inconsistency.
+    Raises
+    ----------
+    ValueError:
+    - If any listed column does not exist.
+    - If unsupported datatypes are specified.
+    - If datetime format is missing or incorrectly applied.
+    - If any actual conversion fails due to data inconsistency.
 
-    Notes:
-        - Leading/trailing whitespaces in the scenario values are stripped.
-        - Only "int", "float", and "datetime" datatypes are supported.
-        - Format strings are required for datetime and must follow ISO 8601 standards.
+    Notes
+    ----------
+    - Leading/trailing whitespaces in the scenario values are stripped.
+    - Only "int", "float", and "datetime" datatypes are supported.
+    - Format strings are required for datetime and must follow ISO 8601 standards.
     """
     # Sample conver_scenario:
     # {"column":["High School Percentage", "Test Date"],
@@ -232,12 +239,13 @@ class TypeConversionStep(_PipelineStep):
 
     Methods
     -------
-    apply(data: pd.DataFrame) -> pd.DataFrame
+    apply(data: pd.DataFrame) -> pd.DataFrame:
         Executes the datatype conversion on the provided DataFrame.
 
     Raises
     ------
-    ValueError: If parameters are missing or invalid in USER_DEFINED mode.
+        ValueError: 
+            If parameters are missing or invalid in USER_DEFINED mode.
     """
     def __init__(self, 
                 convert_datatype_method : ConvertDatatypeMethod,

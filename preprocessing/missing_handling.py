@@ -2,39 +2,47 @@
 Missing Values Handling Module
 ==============================
 
-This module provides a unified framework for detecting and handling missing values in tabular datasets
-using multiple configurable strategies. It is designed to be integrated into data preprocessing pipelines,
-offering both simple and advanced imputation techniques with flexible options.
+This module provides functionality for detecting and handling missing values in pandas DataFrames 
+through configurable strategies, tailored for integration into preprocessing pipelines. It supports 
+basic and advanced imputation methods, offering flexibility and robustness in managing incomplete data.
 
-Features
---------
-- Multiple missing value handling strategies:
-    - Drop rows with missing values
-    - Impute based on column data types (mean, median, mode)
-    - Impute using adjacent values (forward fill, backward fill, interpolation)
-- Enum-based configuration for clarity and extensibility
-- Verbose logging for better traceability during debugging
-- Compatible with pandas DataFrames and reusable in modular pipelines
+Core Features:
+--------------
+1. **Missing Value Dropping**
+   - Removes rows containing any missing values.
+   - Suitable for strict data quality requirements or small-scale datasets.
 
-Main Components
----------------
-- Enums:
-    - `HandleMissingMethod`: Defines the overall strategy (DROP, DATATYPE_IMPUTATION, ADJACENT_VALUE_IMPUTATION)
-    - `NumericDatatypeImputationMethod`: Specifies imputation technique for numeric columns (MEAN, MEDIAN, MODE)
-    - `AdjacentImputationMethod`: Specifies forward/backward fill or interpolation strategies (FORWARD, BACKWARD, INTERPOLATION_LINEAR, INTERPOLATION_TIME)
+2. **Datatype-Based Imputation**
+   - Imputes numeric columns using mean, median, or mode (as specified).
+   - Imputes categorical columns using mode.
+   - Ideal for general-purpose preprocessing with minimal domain assumptions.
 
-- Functions:
-    - `handle_missing_values_drop`: Removes rows containing missing values
-    - `handle_missing_values_datatype_imputation`: Fills missing values based on data type
-    - `handle_missing_values_adjacent_value_imputation`: Uses temporal or sequential neighbors for imputation
+3. **Adjacent Value Imputation**
+   - Fills missing values using temporal or ordered context:
+     - Forward fill
+     - Backward fill
+     - Linear interpolation
+     - Time-based interpolation (requires datetime column)
+   - Best for time series or sequence-based data.
 
-- Classes:
-    - `HandleMissingStep`: A pipeline-compatible class that applies the selected missing value strategy
+4. **Pipeline Integration**
+   - Includes `HandleMissingStep`, a `_PipelineStep`-compatible class for plug-and-play use in modular pipelines.
 
-Raises
+Enums:
 ------
-- ValueError: If required configuration parameters are missing
-- KeyError: If a specified time column for interpolation is not present in the data
+- `HandleMissingMethod`: Strategy enum — DROP, DATATYPE_IMPUTATION, ADJACENT_VALUE_IMPUTATION.
+- `NumericDatatypeImputationMethod`: Specifies numeric column strategy — MEAN, MEDIAN, MODE.
+- `AdjacentImputationMethod`: Neighbor-based methods — FORWARD, BACKWARD, INTERPOLATION_LINEAR, INTERPOLATION_TIME.
+
+Functions:
+----------
+- `handle_missing_values_drop`: Drops rows containing missing values.
+- `handle_missing_values_datatype_imputation`: Fills missing values using datatype-aware rules.
+- `handle_missing_values_adjacent_value_imputation`: Fills using adjacent/temporal values or interpolation.
+
+Classes:
+--------
+- `HandleMissingStep`: Pipeline-compatible class that encapsulates the full missing value handling logic.
 """
 import pandas as pd
 from enum import Enum
@@ -48,16 +56,16 @@ class AdjacentImputationMethod(Enum):
     These methods are typically applied to time series or ordered datasets
     where the value of a data point can be estimated from its neighbors.
 
-    Options
-    -------
-    FORWARD :
-        Forward fill — propagates the last valid (non-missing) observation forward.
-    BACKWARD :
-        Backward fill — fills missing values using the next valid observation.
-    INTERPOLATION_LINEAR :
-        Linear interpolation — estimates missing values by linearly interpolating between known values.
-    INTERPOLATION_TIME :
-        Time-based interpolation — performs interpolation using a datetime index, suitable for time series data.
+    Attributes
+    ----------
+        FORWARD: int
+            Forward fill — propagates the last valid (non-missing) observation forward.
+        BACKWARD: int
+            Backward fill — fills missing values using the next valid observation.
+        INTERPOLATION_LINEAR: int
+            Linear interpolation — estimates missing values by linearly interpolating between known values.
+        INTERPOLATION_TIME: int
+            Time-based interpolation — performs interpolation using a datetime index, suitable for time series data.
 
     Notes
     -----
@@ -78,14 +86,14 @@ class NumericDatatypeImputationMethod(Enum):
     These methods are used to replace missing values with statistical summaries
     derived from the non-missing values in the column.
 
-    Options
-    -------
-    MEAN :
-        Impute using the mean (average) of the column.
-    MEDIAN :
-        Impute using the median (middle value) of the column.
-    MODE :
-        Impute using the mode (most frequent value) of the column.
+    Attributes
+    ----------
+        MEAN: int
+            Impute using the mean (average) of the column.
+        MEDIAN: int
+            Impute using the median (middle value) of the column.
+        MODE: int
+            Impute using the mode (most frequent value) of the column.
 
     Notes
     -----
@@ -106,15 +114,14 @@ class HandleMissingMethod(Enum):
 
     These strategies dictate how the pipeline should respond to the presence of missing data.
 
-    Options
-    -------
-    DROP :
-        Remove rows that contain any missing values.
-    DATATYPE_IMPUTATION :
-        Impute missing values based on data types: numeric columns use a specified method (mean/median/mode),
-        while categorical columns use the mode.
-    ADJACENT_VALUE_IMPUTATION :
-        Impute missing values using neighboring data points via forward fill, backward fill, or interpolation.
+    Attributes
+    ----------
+        DROP: int
+            Remove rows that contain any missing values.
+        DATATYPE_IMPUTATION: int
+            Impute missing values based on data types: numeric columns use a specified method (mean/median/mode), while categorical columns use the mode.
+        ADJACENT_VALUE_IMPUTATION: int
+            Impute missing values using neighboring data points via forward fill, backward fill, or interpolation.
 
     Notes
     -----
@@ -342,12 +349,6 @@ class HandleMissingStep(_PipelineStep):
     This class allows for configurable missing value handling and integrates seamlessly
     into data preprocessing workflows by implementing the `_PipelineStep` interface.
 
-    Strategies supported:
-    ---------------------
-    - Drop rows with missing values.
-    - Impute using column data types (mean, median, or mode for numeric; mode for categorical).
-    - Use adjacent values (forward/backward fill or interpolation).
-
     Parameters
     ----------
     handle_missing_method : HandleMissingMethod
@@ -363,13 +364,19 @@ class HandleMissingStep(_PipelineStep):
 
     Methods
     -------
-    apply(data: pd.DataFrame) -> pd.DataFrame
+    apply(data: pd.DataFrame) -> pd.DataFrame:
         Applies the configured missing value handling strategy to the input data.
 
     Raises
     ------
     ValueError
         If a required imputation method is not specified for the chosen strategy.
+
+    Strategies supported
+    ---------------------
+    - Drop rows with missing values.
+    - Impute using column data types (mean, median, or mode for numeric; mode for categorical).
+    - Use adjacent values (forward/backward fill or interpolation).
     """
     def __init__(self, 
                 handle_missing_method : HandleMissingMethod = HandleMissingMethod.DROP,

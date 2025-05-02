@@ -56,8 +56,10 @@ class HandleDuplicateMethod(Enum):
 
     Attributes
     ----------
-    EXACT : Identifies and removes exact duplicates.
-    FUZZY : Identifies and removes approximate (fuzzy) duplicates based on string similarity.
+    EXACT : int
+        Identifies and removes exact duplicates.
+    FUZZY : int
+        Identifies and removes approximate (fuzzy) duplicates based on string similarity.
     """
     EXACT = 1
     FUZZY = 2
@@ -273,7 +275,7 @@ class HandleDuplicateStep(_PipelineStep):
 
     Methods
     -------
-    apply(data: pd.DataFrame) -> pd.DataFrame
+    apply (data: pd.DataFrame) -> pd.DataFrame:
         Apply the configured duplicate handling method to the input DataFrame.
 
     Notes

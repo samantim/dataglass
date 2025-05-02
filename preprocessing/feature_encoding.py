@@ -221,7 +221,7 @@ class EncodeFeatureStep(_PipelineStep):
 
     Methods
     -------
-    apply(data: pd.DataFrame) -> pd.DataFrame
+    apply(data: pd.DataFrame) -> pd.DataFrame:
         Applies the selected encoding method to the provided data and returns the transformed DataFrame.
 
     Raises

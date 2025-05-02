@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import pytest
 from datetime import datetime
-from ..preprocessing import *
+from ..preprocessing import duplicate_handling, feature_encoding, feature_scaling, missing_handling, outlier_handling, type_conversion
 from ..pipeline import DataPipeline
 
 
