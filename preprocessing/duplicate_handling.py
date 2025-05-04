@@ -43,7 +43,6 @@ Notes
 - Preprocessing such as text normalization or column selection can improve fuzzy matching accuracy.
 """
 import pandas as pd
-import numpy as np
 from typing import List, Tuple
 from rapidfuzz import fuzz
 from itertools import combinations
