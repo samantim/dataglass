@@ -31,11 +31,32 @@ Requires: pandas, numpy, scikit-learn, seaborn, matplotlib, rapidfuzz, category_
 
 ### ❓ Missing Value Handling
 ```bash
+import dataglass as dg
 import pandas as pd
 import numpy as np
-import dataglass.preprocessing as dgp
 
-df = pd.DataFrame({"name" : ["John", "Jane", "Jack"],
-                   "age" : [40, np.nan, 50]})
-df_clean = dgp.handle_missing_values_datatype_imputation(df, NumericDatatypeImputationMethod.MEAN)
+df = pd.DataFrame({
+    "name": ["John", "Jane", "Jack"],
+    "age": [40, np.nan, 50],
+    "gender": ["male", "female", "male"]
+})
+
+handle_missing = dg.HandleMissingStep(dg.HandleMissingMethod.DROP)
+handle_duplicate = dg.HandleDuplicateStep(dg.HandleDuplicateMethod.EXACT)
+handle_outlier = dg.HandleOutlierStep(dg.DetectOutlierMethod.IQR, dg.HandleOutlierMethod.DROP)
+encode_feature = dg.EncodeFeatureStep(dg.FeatureEncodingMethod.LABEL_ENCODING, ["gender"])
+scale_feature = dg.ScaleFeatureStep({"column": ["age"], "scaling_method": ["MINMAX_SCALING"]})
+type_conversion = dg.TypeConversionStep(dg.ConvertDatatypeMethod.AUTO, verbose=True)
+
+dp = dg.DataPipeline([
+    handle_missing,
+    handle_duplicate,
+    type_conversion,
+    handle_outlier,
+    scale_feature,
+    encode_feature,
+])
+
+df_cleaned = dp.apply(df)
+print(df_cleaned)
 ```
