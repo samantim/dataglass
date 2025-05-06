@@ -24,3 +24,18 @@
 pip install dataglass
 ```
 Requires: pandas, numpy, scikit-learn, seaborn, matplotlib, rapidfuzz, category_encoders
+
+---
+
+## 📘 Usage Examples
+
+### ❓ Missing Value Handling
+```bash
+import pandas as pd
+import numpy as np
+import dataglass.preprocessing as dgp
+
+df = pd.DataFrame({"name" : ["John", "Jane", "Jack"],
+                   "age" : [40, np.nan, 50]})
+df_clean = dgp.handle_missing_values_datatype_imputation(df, NumericDatatypeImputationMethod.MEAN)
+```
