@@ -8,12 +8,12 @@
 
 ## 🚀 Preprocessing Features
 
-- **Missing Value Imputation** (Drop, Imputation by Datatype: Mean/Median/Mode, Imputation by Adjacent Values: Forward/Backward Fill, Interpolation: Linear/Time-based)
-- **Duplicate Detection & Removal** (Exact & Fuzzy Matching with Full and Partial Similarity Check)
-- **Outlier Detection & Handling** (Detection: IQR/Z-Score/Isolation Forest/LOF, Handling: Drop/Replace with Median/Cap with Boundaries, Visualization: Before vs After Boxplot/Histogram)
+- **Missing Value Handling** (*Drop*, *Imputation by Datatype*: Mean/Median/Mode, *Imputation by Adjacent Values*: Forward/Backward Fill, *Interpolation*: Linear/Time-based)
+- **Duplicate Detection & Removal** (*Exact* & *Fuzzy* Matching with Full and Partial Similarity Check)
+- **Outlier Detection & Handling** (*Detection*: IQR/Z-Score/Isolation Forest/LOF, *Handling*: Drop/Replace with Median/Cap with Boundaries, *Visualization*: Before vs After Boxplot/Histogram)
 - **Feature encoding** (Label Encoding/Onehot Encoding/Hashing)
 - **Type Conversion** (Automatic Datatype Inferring/User-defined Type Conversion)
-- **Feature Scaling** (Scaling: Min-Max/Z-Score/Robust Scaling, Normalization: L2 Normalization)
+- **Feature Scaling** (*Scaling*: Min-Max/Z-Score/Robust Scaling, *Normalization*: L2 Normalization)
 - **Pipeline Compatibility** (Custom pipeline interface for reusable workflows)
 - **Non-destructive processing** (Any operation leaves the input data unchanged)
 
@@ -32,7 +32,7 @@ There are two approaches to using the library features: the **pipeline architect
 
 <br>
 
-### 🧩 Pipeline Approach (Simplest Configuration)
+### 🧩 pipeline architecture (Simplest Configuration)
 Use this approach when you want a clean, modular, and reusable workflow for **end-to-end preprocessing**.
 <br>
 
@@ -86,9 +86,11 @@ print(df_cleaned)
 
 <br>
 
-### ⚙️ Functional Approach
+### ⚙️ standalone function usage
 Use this approach when you need fine-grained control or quick one-off transformations on specific parts of your data.
+
 <br>
+
 #### ❓ Missing Handling Module
 This module provides multiple strategies to handle missing data though these functions:
 
@@ -96,8 +98,8 @@ This module provides multiple strategies to handle missing data though these fun
     - `Eliminate` all rows that contain any NaN value.
 
 - ***handle_missing_values_datatype_imputation***: Data type–aware imputation
-    - Fill missing numeric values using the specified strategy: `mean`, `median`, or `mode`.
-    - Fill missing categorical values with the first `mode` of each column.
+    - Fill missing *numeric* values using the specified strategy: `mean`, `median`, or `mode`.
+    - Fill missing *categorical* values with the first `mode` of each column.
 
 - ***handle_missing_values_adjacent_value_imputation***: Value propagation or interpolation
     - `Forward fill (ffill)`
@@ -126,16 +128,17 @@ df_cleaned = dg.handle_missing_values_datatype_imputation(
 
 print(df_cleaned)
 ```
+<br>
 
 #### 📑 Duplicate Handling Module
 This module provides two strategies to handle duplicate data though these functions:
 
 - ***handle_duplicate_values_exact***: Remove `exact duplicate` rows
-    - Optionally, a specific set of columns can be provided for duplicate analysis via columns_subset
+    - Optionally, a specific set of columns can be provided for duplicate analysis via `columns_subset`
 
 - ***handle_duplicate_values_fuzzy***: Remove `approximate (fuzzy) duplicates` based on string similarity
     - Define the `similarity threshold` (e.g., 70–90%)
-    - Limit the comparison to specific columns via columns_subset
+    - Limit the comparison to specific columns via `columns_subset`
 
 
 ```python
@@ -161,6 +164,7 @@ df_cleaned = dg.handle_duplicate_values_fuzzy(
 
 print(df_cleaned)
 ```
+<br>
 
 #### ❗ Outlier Handling Module
 This module separates the detection and handling of outliers, giving you flexibility and control.
@@ -202,7 +206,7 @@ df_cleaned = dg.handle_outliers(
 
 print(df_cleaned)
 ```
-
+<br>
 
 #### 🔢 Feature Encoding Module
 This module provides multiple methods to encode categorical features into numerical representations suitable for machine learning.
@@ -235,6 +239,7 @@ df_cleaned = dg.encode_feature(
 
 print(df_cleaned)
 ```
+<br>
 
 #### 🔁 Type Conversion Module
 This module provides methods for converting column datatypes for better compatibility and precision.
@@ -271,6 +276,7 @@ df_cleaned = dg.convert_datatype_userdefined(
 
 print(df_cleaned)
 ```
+<br>
 
 #### 📏 Feature Scaling Module
 This module allows feature scaling using different methods on selected columns, with an optional L2 normalization across all numeric columns.
@@ -278,7 +284,7 @@ This module allows feature scaling using different methods on selected columns, 
 - ***scale_feature***: 
     - Supported scaling methods: `MINMAX_SCALING`, `ZSCORE_STANDARDIZATION`, `ROBUST_SCALING`
     - L2 normalization can be optionally applied to all numeric columns after scaling
-    - Scaling can be customized per column using the scaling_scenario
+    - Scaling can be customized per column using the `scaling_scenario`
 
 ```python
 import dataglass as dg
