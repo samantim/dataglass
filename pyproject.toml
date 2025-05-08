@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dataglass"
-version = "1.0.0"
+version = "0.1.0"
 description = "A Python library for data preprocessing, exploratory data analysis (EDA), and machine learning. This version implements the preprocessing module, including missing value handling, duplicate detection and handling, outlier handling, feature encoding, type conversion, and feature scaling."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -24,18 +24,16 @@ classifiers = [
   "Development Status :: 5 - Production/Stable",
   "Intended Audience :: Developers",
   "Intended Audience :: Science/Research",
-  "Intended Audience :: Information Technology",
   "Intended Audience :: Education",
-  "Intended Audience :: End Users/Desktop",
   "Topic :: Scientific/Engineering",
   "Topic :: Scientific/Engineering :: Information Analysis",
   "Topic :: Software Development :: Libraries :: Python Modules",
   "Topic :: Software Development :: Pre-processors",
   "Topic :: Utilities",
-  "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent"
 ]

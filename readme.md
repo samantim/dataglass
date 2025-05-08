@@ -32,7 +32,7 @@ There are two approaches to using the library features: the **pipeline architect
 
 <br>
 
-### 🧩 pipeline architecture (Simplest Configuration)
+### 🧩 Pipeline Architecture (Simplest Configuration)
 Use this approach when you want a clean, modular, and reusable workflow for **end-to-end preprocessing**.
 <br>
 
@@ -86,7 +86,7 @@ print(df_cleaned)
 
 <br>
 
-### ⚙️ standalone function usage
+### ⚙️ Standalone Function Usage
 Use this approach when you need fine-grained control or quick one-off transformations on specific parts of your data.
 
 <br>
