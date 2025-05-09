@@ -10,12 +10,6 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 
-[project.urls]
-Homepage = "https://github.com/samantim/dataglass"
-Documentation = "https://github.com/samantim/dataglass/wiki"
-Source = "https://github.com/samantim/dataglass"
-Issues = "https://github.com/samantim/dataglass/issues"
-
 authors = [
   { name = "Saman Teymouri", email = "saman.teymouri@gmail.com" }
 ]
@@ -49,3 +43,9 @@ dependencies = [
   "seaborn>=0.11",
   "category_encoders>=2.5"
 ]
+
+[project.urls]
+Homepage = "https://github.com/samantim/dataglass"
+Documentation = "https://github.com/samantim/dataglass/wiki"
+Source = "https://github.com/samantim/dataglass"
+Issues = "https://github.com/samantim/dataglass/issues"
