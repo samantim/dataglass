@@ -1,8 +1,8 @@
 import pandas as pd
 import numpy as np
 import pytest
-from ..preprocessing import *
-from ..pipeline import DataPipeline
+from src.dataglass import *
+from src.dataglass import DataPipeline
 
 
 # Sample dataset to run the tests with

@@ -1,0 +1,34 @@
+Metadata-Version: 2.4
+Name: dataglass
+Version: 0.1.0
+Summary: A Python library for data preprocessing, exploratory data analysis (EDA), and machine learning. This version implements the preprocessing module, including missing value handling, duplicate detection and handling, outlier handling, feature encoding, type conversion, and feature scaling.
+Author-email: Saman Teymouri <saman.teymouri@gmail.com>
+License-Expression: MIT
+Project-URL: Homepage, https://github.com/samantim/dataglass
+Project-URL: Documentation, https://github.com/samantim/dataglass/wiki
+Project-URL: Source, https://github.com/samantim/dataglass
+Project-URL: Issues, https://github.com/samantim/dataglass/issues
+Keywords: data preprocessing,EDA,machine learning,data cleaning,feature engineering,pandas,scikit-learn
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: Intended Audience :: Education
+Classifier: Topic :: Scientific/Engineering
+Classifier: Topic :: Scientific/Engineering :: Information Analysis
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Software Development :: Pre-processors
+Classifier: Topic :: Utilities
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: pandas>=1.5
+Requires-Dist: numpy>=1.21
+Requires-Dist: scikit-learn>=1.1
+Requires-Dist: matplotlib>=3.5
+Requires-Dist: rapidfuzz>=3.0
+Requires-Dist: seaborn>=0.11
+Requires-Dist: category_encoders>=2.5

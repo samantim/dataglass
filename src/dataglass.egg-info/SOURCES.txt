@@ -1,0 +1,17 @@
+pyproject.toml
+src/dataglass/__init__.py
+src/dataglass.egg-info/PKG-INFO
+src/dataglass.egg-info/SOURCES.txt
+src/dataglass.egg-info/dependency_links.txt
+src/dataglass.egg-info/requires.txt
+src/dataglass.egg-info/top_level.txt
+src/dataglass/pipeline/__init__.py
+src/dataglass/pipeline/pipeline.py
+src/dataglass/preprocessing/__init__.py
+src/dataglass/preprocessing/duplicate_handling.py
+src/dataglass/preprocessing/feature_encoding.py
+src/dataglass/preprocessing/feature_scaling.py
+src/dataglass/preprocessing/missing_handling.py
+src/dataglass/preprocessing/outlier_handling.py
+src/dataglass/preprocessing/type_conversion.py
+tests/test_preprocessing.py

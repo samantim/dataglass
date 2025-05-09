@@ -187,14 +187,16 @@ import numpy as np
 
 # Sample dataset with an outlier in the "age" column
 df = pd.DataFrame({
-    "name": ["John", "Johney", "Jack"],
-    "age": [40, 45, 200],
+    "name": ["John", "Johney", "Jack", "Sara", "Chris"],
+    "age": [40, 45, 30, 25, 200],
 })
 
-# Step 1: Detect outliers using the Z-Score method
+# Step 1: Detect outliers using the IQR method
 outliers, boundaries = dg.detect_outliers(
     data = df, 
-    detect_outlier_method = dg.DetectOutlierMethod.ZSCORE)
+    detect_outlier_method = dg.DetectOutlierMethod.IQR)
+
+print(boundaries)
 
 # Step 2: Cap outlier values with the calculated boundaries
 df_cleaned = dg.handle_outliers(
@@ -301,8 +303,8 @@ df = pd.DataFrame({
 
 # Define a scenario to scale "age" using MinMax and "score" using RobustScaler
 scaling_scenario = {
-    "column": ["age", "score"],
-    "scaling_method": ["MINMAX_SCALING", "ROBUST_SCALING"]
+    "column": ["age", "score", "income"],
+    "scaling_method": ["MINMAX_SCALING", "ROBUST_SCALING", "ZSCORE_STANDARDIZATION"]
 }
 
 # Apply scaling and then L2 normalize all numeric features

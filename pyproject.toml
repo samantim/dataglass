@@ -8,10 +8,11 @@ version = "0.1.0"
 description = "A Python library for data preprocessing, exploratory data analysis (EDA), and machine learning. This version implements the preprocessing module, including missing value handling, duplicate detection and handling, outlier handling, feature encoding, type conversion, and feature scaling."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 
 authors = [
-  { name = "Saman Teymouri", email = "saman.teymouri@gmail.com" }
+  {name = "Saman Teymouri", email = "saman.teymouri@gmail.com"}
 ]
 
 classifiers = [
@@ -28,7 +29,6 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
-  "License :: OSI Approved :: MIT License",
   "Operating System :: OS Independent"
 ]
 
@@ -43,6 +43,12 @@ dependencies = [
   "seaborn>=0.11",
   "category_encoders>=2.5"
 ]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [project.urls]
 Homepage = "https://github.com/samantim/dataglass"
