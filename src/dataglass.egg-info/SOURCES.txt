@@ -1,4 +1,7 @@
+LICENSE
+README.md
 pyproject.toml
+setup.py
 src/dataglass/__init__.py
 src/dataglass.egg-info/PKG-INFO
 src/dataglass.egg-info/SOURCES.txt

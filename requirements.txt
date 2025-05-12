@@ -7,3 +7,4 @@ matplotlib
 seaborn
 category_encoders
 build
+setuptools

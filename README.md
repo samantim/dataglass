@@ -206,6 +206,9 @@ df_cleaned = dg.handle_outliers(
     boundaries=boundaries,
     verbose=True)
 
+# Visualize the outliers using boxplot and histograms before and after cleaning
+dg.visualize_outliers(df, df_cleaned, "", dg.DetectOutlierMethod.IQR, dg.HandleOutlierMethod.CAP_WITH_BOUNDARIES)
+
 print(df_cleaned)
 ```
 <br>
