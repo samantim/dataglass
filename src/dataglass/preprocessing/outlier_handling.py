@@ -383,17 +383,22 @@ def visualize_outliers(original_data : pd.DataFrame, cleaned_data : pd.DataFrame
     plt.tight_layout(pad=1, h_pad=0.5, w_pad=0.5)   
     
     for col in observing_columns:
-        plt.subplot(2,2,1)
-        sns.boxplot(original_data[col])
+        # Create subplots for the current column
+        ax1 = plt.subplot(2, 2, 1)
+        sns.boxplot(original_data[col], ax=ax1)
+        ax1.set_title("Box Plot - Before Cleaning")
 
-        plt.subplot(2,2,2)
-        sns.histplot(original_data[col], kde=True)
+        ax2 = plt.subplot(2, 2, 2)
+        sns.histplot(original_data[col], kde=True, ax=ax2)
+        ax2.set_title("Histogram - Before Cleaning")
 
-        plt.subplot(2,2,3)
-        sns.boxplot(cleaned_data[col])
+        ax3 = plt.subplot(2, 2, 3)
+        sns.boxplot(cleaned_data[col], ax=ax3)
+        ax3.set_title("Box Plot - After Cleaning")
 
-        plt.subplot(2,2,4)
-        sns.histplot(cleaned_data[col], kde=True)
+        ax4 = plt.subplot(2, 2, 4)
+        sns.histplot(cleaned_data[col], kde=True, ax=ax4)
+        ax4.set_title("Histogram - After Cleaning")
 
         # Save the file with proper dpi
         file_name = path.join(visualization_dir, "_".join([detect_outlier_method.name, handle_outlier_method.name, col]) + ".png")
