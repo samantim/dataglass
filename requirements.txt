@@ -8,3 +8,4 @@ seaborn
 category_encoders
 build
 setuptools
+twine
