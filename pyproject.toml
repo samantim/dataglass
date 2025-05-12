@@ -8,8 +8,7 @@ version = "0.1.0"
 description = "A Python library for data preprocessing, exploratory data analysis (EDA), and machine learning. This version implements the preprocessing module, including missing value handling, duplicate detection and handling, outlier handling, feature encoding, type conversion, and feature scaling."
 readme = "README.md"
 requires-python = ">=3.10"
-license = "MIT"
-license-files = ["LICENSE"]
+license = { text = "BSD-3-Clause" }
 
 authors = [
   {name = "Saman Teymouri", email = "saman.teymouri@gmail.com"}
@@ -46,6 +45,7 @@ dependencies = [
 
 [tool.setuptools]
 package-dir = { "" = "src" }
+license-files = ["LICENSE"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
