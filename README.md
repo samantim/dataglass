@@ -32,7 +32,7 @@
   Custom lightweight pipeline interface for chaining reusable preprocessing steps  
 
 **💾 Non-destructive Processing**  
-  All operations are applied on copies—original data remains unchanged  
+  All operations are applied on copies, and original data remains unchanged  
   
 ---
 
