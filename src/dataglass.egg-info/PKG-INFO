@@ -1,7 +1,7 @@
 Metadata-Version: 2.4
 Name: dataglass
-Version: 0.1.0
-Summary: A Python library for data preprocessing, exploratory data analysis (EDA), and machine learning. This version implements the preprocessing module, including missing value handling, duplicate detection and handling, outlier handling, feature encoding, type conversion, and feature scaling.
+Version: 0.7.0
+Summary: A Python library for data preprocessing, exploratory data analysis (EDA), and machine learning. This version implements the preprocessing module, including missing value handling, duplicate detection and handling, outlier handling, feature encoding, type conversion, feature scaling, and pipeline compatibility.
 Author: Saman Teymouri
 Author-email: Saman Teymouri <saman.teymouri@gmail.com>
 License: BSD-3-Clause
@@ -9,8 +9,8 @@ Project-URL: Homepage, https://github.com/samantim/dataglass
 Project-URL: Documentation, https://github.com/samantim/dataglass/wiki
 Project-URL: Source, https://github.com/samantim/dataglass
 Project-URL: Issues, https://github.com/samantim/dataglass/issues
-Keywords: data preprocessing,EDA,machine learning,data cleaning,feature engineering,pandas,scikit-learn
-Classifier: Development Status :: 5 - Production/Stable
+Keywords: data preprocessing,EDA,machine learning,data cleaning,feature engineering,pipeline,pandas,scikit-learn
+Classifier: Development Status :: 4 - Beta
 Classifier: Intended Audience :: Developers
 Classifier: Intended Audience :: Science/Research
 Classifier: Intended Audience :: Education
