@@ -1,4 +1,4 @@
-# 🧊 dataglass
+# 🔮 dataglass
 
 **A modular and lightweight library for preprocessing, analysis, and modeling structured datasets in Python.**
 
@@ -8,15 +8,31 @@
 
 ## 🚀 Preprocessing Features
 
-- **❓Missing Value Handling** (*Drop*, *Imputation by Datatype*: Mean/Median/Mode, *Imputation by Adjacent Values*: Forward/Backward Fill, *Interpolation*: Linear/Time-based)
-- **📑Duplicate Detection & Removal** (*Exact* & *Fuzzy* Matching with Full and Partial Similarity Check)
-- **❗Outlier Detection & Handling** (*Detection*: IQR/Z-Score/Isolation Forest/LOF, *Handling*: Drop/Replace with Median/Cap with Boundaries, *Visualization*: Before vs After Boxplot/Histogram)
-- **🔢Feature encoding** (Label Encoding/Onehot Encoding/Hashing)
-- **🔁Type Conversion** (Automatic Datatype Inferring/User-defined Type Conversion)
-- **📏Feature Scaling** (*Scaling*: Min-Max/Z-Score/Robust Scaling, *Normalization*: L2 Normalization)
-- **🧩Pipeline Compatibility** (Custom pipeline interface for reusable workflows)
-- **💾Non-destructive processing** (Any operation leaves the input data unchanged)
+- **❓ Missing Value Handling**  
+  Drop rows, imputation by datatype (mean, median, mode), imputation by adjacent values (forward/backward fill), and interpolation (linear, time-based)  
 
+- **📑 Duplicate Detection & Removal**  
+  Detect and remove exact and fuzzy duplicates using full and partial similarity checks  
+
+- **❗ Outlier Detection & Handling**  
+  Detect outliers using IQR, Z-Score, Isolation Forest, and Local Outlier Factor (LOF)  
+  Handle them by dropping, replacing with median, or capping with boundaries  
+  Includes visualization tools: before vs. after boxplots and histograms  
+
+- **🔢 Feature Encoding**  
+  Supports label encoding, one-hot encoding, and hashing for categorical variables  
+
+- **🔁 Type Conversion**  
+  Automatic datatype inference and user-defined type conversion support  
+
+- **📏 Feature Scaling**  
+  Includes Min-Max scaling, Z-Score (standard) scaling, robust scaling, and L2 normalization  
+
+- **🧩 Pipeline Compatibility**  
+  Custom lightweight pipeline interface for chaining reusable preprocessing steps  
+
+- **💾 Non-destructive Processing**  
+  All operations are applied on copies—original data remains unchanged  
 ---
 
 ## 📦 Installation
@@ -448,7 +464,7 @@ All other dependencies will be installed automatically via `pip install dataglas
 
 ## 📄 License  
 
-This project is licensed under the [New BSD License](https://opensource.org/license/BSD-3-Clause).  
+This project is licensed under the [BSD 3-Clause License](https://opensource.org/license/BSD-3-Clause).  
 See the [LICENSE](https://github.com/samantim/dataglass/blob/main/LICENSE) file in the repository for full details.
 
 ---
