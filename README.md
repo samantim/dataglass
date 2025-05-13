@@ -80,7 +80,26 @@ dp = dg.DataPipeline([
 df_cleaned = dp.apply(df)
 
 # Display the cleaned and transformed dataframe
-print(df_cleaned)
+print(f"Preprocessed Data:\n{df_cleaned}")
+
+# =========== Expected Terminal Output =============
+
+# Before automatic datatype conversion, the datatype are as follows:
+# name       object
+# age       float64
+# gender     object
+# dtype: object
+
+# After automatic datatype conversion, the datatype are as follows:
+# name      object
+# age        int64
+# gender    object
+# dtype: object
+
+# Preprocessed Data:
+#    name  age gender  gender_encoded
+# 0  John  0.0   male               0
+# 2  Jack  1.0   male               0
 ```
 
 <br>
@@ -123,7 +142,25 @@ df_cleaned = dg.handle_missing_values_datatype_imputation(
     verbose = True
 )
 
-print(df_cleaned)
+print(f"Preprocessed Data:\n{df_cleaned}")
+
+# =========== Expected Terminal Output =============
+
+# Dataset has 3 rows before handling missing values.
+
+# Missing values are:
+# name      0
+# age       1
+# gender    1
+# dtype: int64
+
+# Dataset has 3 rows after handling missing values.
+
+# Preprocessed Data:
+#    name   age  gender
+# 0  John  40.0    male
+# 1  Jane  45.0  female
+# 2  Jack  50.0  female
 ```
 <br>
 
@@ -159,7 +196,23 @@ df_cleaned = dg.handle_duplicate_values_fuzzy(
     similarity_thresholds = (70,100), 
     verbose = True)
 
-print(df_cleaned)
+print(f"Preprocessed Data:\n{df_cleaned}")
+
+# =========== Expected Terminal Output =============
+
+# Dataset has 3 rows before handling duplicate values.
+
+# Top 10 of duplicate values are (Totally 2 rows - including all duplicates, but from each group first one will remain and others will be removed):
+#      name  age
+# 0    John   40
+# 1  Johney   45
+
+# Dataset has 2 rows after handling duplicate values.
+
+# Preprocessed Data:
+#    name  age
+# 0  John   40
+# 2  Jack   50
 ```
 <br>
 
@@ -193,7 +246,7 @@ outliers, boundaries = dg.detect_outliers(
     data = df, 
     detect_outlier_method = dg.DetectOutlierMethod.IQR)
 
-print(boundaries)
+print(f"Boundries:\n{boundaries}")
 
 # Step 2: Cap outlier values with the calculated boundaries
 df_cleaned = dg.handle_outliers(
@@ -206,7 +259,30 @@ df_cleaned = dg.handle_outliers(
 # Visualize the outliers using boxplot and histograms before and after cleaning
 dg.visualize_outliers(df, df_cleaned, "", dg.DetectOutlierMethod.IQR, dg.HandleOutlierMethod.CAP_WITH_BOUNDARIES)
 
-print(df_cleaned)
+print(f"Preprocessed Data:\n{df_cleaned}")
+
+# =========== Expected Terminal Output =============
+
+# Boundries:
+# {'age': (np.float64(7.5), np.float64(67.5))}
+
+# Dataset has 5 rows before handling outliers values.
+
+# Top 10 of rows containing outliers are (Totally 1 rows):
+#     name  age
+# 4  Chris  200
+
+# Dataset has 5 rows after handling outliers.
+
+# Preprocessed Data:
+#      name   age
+# 0    John  40.0
+# 1  Johney  45.0
+# 2    Jack  30.0
+# 3    Sara  25.0
+# 4   Chris  67.5
+
+# Visualizations have been saved in the 'visualizations' folder inside the project root directory.
 ```
 <br>
 
@@ -239,7 +315,15 @@ df_cleaned = dg.encode_feature(
     feature_encoding_method = dg.FeatureEncodingMethod.LABEL_ENCODING,
     columns_subset = columns_subset)
 
-print(df_cleaned)
+print(f"Preprocessed Data:\n{df_cleaned}")
+
+# =========== Expected Terminal Output =============
+
+# Preprocessed Data:
+#    name  age  gender  gender_encoded
+# 0  John   40    male               1
+# 1  Jane   45  female               0
+# 2  Jack   50    male               1
 ```
 <br>
 
@@ -276,7 +360,27 @@ df_cleaned = dg.convert_datatype_userdefined(
     convert_scenario = convert_scenario,
     verbose=True)
 
-print(df_cleaned)
+print(f"Preprocessed Data:\n{df_cleaned}")
+
+# =========== Expected Terminal Output =============
+
+# Before automatic datatype conversion, the datatype are as follows:
+# name            object
+# age            float64
+# signup_date     object
+# dtype: object
+
+# After automatic datatype conversion, the datatype are as follows:
+# name                   object
+# age                     int64
+# signup_date    datetime64[ns]
+# dtype: object
+
+# Preprocessed Data:
+#    name  age signup_date
+# 0  John   40  2023-01-01
+# 1  Jane   45  2023-01-01
+# 2  Jack   50  2023-03-01
 ```
 <br>
 
@@ -313,7 +417,15 @@ df_cleaned = dg.scale_feature(
     scaling_scenario = scaling_scenario,
     apply_l2normalization = True)
 
-print(df_cleaned)
+print(f"Preprocessed Data:\n{df_cleaned}")
+
+# =========== Expected Terminal Output =============
+
+# Preprocessed Data:
+#    name       age     score    income
+# 0  John  0.000000 -0.167564  0.985861
+# 1  Jane  0.786796  0.000000  0.617213
+# 2  Jack  0.400137  0.733584 -0.549313
 ```
 
 ---
@@ -336,7 +448,7 @@ All other dependencies will be installed automatically via `pip install dataglas
 
 ## 📄 License  
 
-This project is licensed under the [BSD License](https://opensource.org/license/BSD-3-Clause).
+This project is licensed under the [New BSD License](https://opensource.org/license/BSD-3-Clause).  
 See the [LICENSE](https://github.com/samantim/dataglass/blob/main/LICENSE) file in the repository for full details.
 
 ---
