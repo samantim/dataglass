@@ -8,31 +8,32 @@
 
 ## 🚀 Preprocessing Features
 
-- **❓ Missing Value Handling**  
+**❓ Missing Value Handling**  
   Drop rows, imputation by datatype (mean, median, mode), imputation by adjacent values (forward/backward fill), and interpolation (linear, time-based)  
 
-- **📑 Duplicate Detection & Removal**  
+**📑 Duplicate Detection & Removal**  
   Detect and remove exact and fuzzy duplicates using full and partial similarity checks  
 
-- **❗ Outlier Detection & Handling**  
+**❗ Outlier Detection & Handling**  
   Detect outliers using IQR, Z-Score, Isolation Forest, and Local Outlier Factor (LOF)  
   Handle them by dropping, replacing with median, or capping with boundaries  
   Includes visualization tools: before vs. after boxplots and histograms  
 
-- **🔢 Feature Encoding**  
+**🔢 Feature Encoding**  
   Supports label encoding, one-hot encoding, and hashing for categorical variables  
 
-- **🔁 Type Conversion**  
+**🔁 Type Conversion**  
   Automatic datatype inference and user-defined type conversion support  
 
-- **📏 Feature Scaling**  
+**📏 Feature Scaling**  
   Includes Min-Max scaling, Z-Score (standard) scaling, robust scaling, and L2 normalization  
 
-- **🧩 Pipeline Compatibility**  
+**🧩 Pipeline Compatibility**  
   Custom lightweight pipeline interface for chaining reusable preprocessing steps  
 
-- **💾 Non-destructive Processing**  
+**💾 Non-destructive Processing**  
   All operations are applied on copies—original data remains unchanged  
+  
 ---
 
 ## 📦 Installation
