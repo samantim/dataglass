@@ -2,10 +2,10 @@ from setuptools import setup, find_packages
 
 setup(
     name="dataglass",
-    version="0.1.0",
+    version="0.7.0",
     description="A Python library for data preprocessing, exploratory data analysis (EDA), and machine learning. "
                 "This version implements the preprocessing module, including missing value handling, duplicate "
-                "detection and handling, outlier handling, feature encoding, type conversion, and feature scaling.",
+                "detection and handling, outlier handling, feature encoding, type conversion, feature scaling, and pipeline compatibility.",
     long_description=open("README.md", encoding="utf-8").read(),
     long_description_content_type="text/markdown",
     author="Saman Teymouri",
@@ -24,7 +24,7 @@ setup(
         "category_encoders>=2.5"
     ],
     classifiers=[
-        "Development Status :: 5 - Production/Stable",
+        "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "Intended Audience :: Science/Research",
         "Intended Audience :: Education",
@@ -42,7 +42,7 @@ setup(
     ],
     keywords=[
         "data-preprocessing", "eda", "machine-learning", "data-cleaning", 
-        "feature-engineering", "pandas", "scikit-learn"
+        "feature-engineering", "pipeline", "pandas", "scikit-learn"
     ],
     project_urls={
         "Homepage": "https://github.com/samantim/dataglass",
