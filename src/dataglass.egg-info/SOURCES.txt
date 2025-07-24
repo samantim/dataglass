@@ -8,6 +8,8 @@ src/dataglass.egg-info/SOURCES.txt
 src/dataglass.egg-info/dependency_links.txt
 src/dataglass.egg-info/requires.txt
 src/dataglass.egg-info/top_level.txt
+src/dataglass/automation/__init__.py
+src/dataglass/automation/auto_preprocessing.py
 src/dataglass/pipeline/__init__.py
 src/dataglass/pipeline/pipeline.py
 src/dataglass/preprocessing/__init__.py

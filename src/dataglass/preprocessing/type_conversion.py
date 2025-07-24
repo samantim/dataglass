@@ -109,7 +109,7 @@ def convert_datatype_auto(data : pd.DataFrame, verbose : bool = False) -> pd.Dat
             # Ignore warnings
             with warnings.catch_warnings(action="ignore"):
                 if not pd.api.types.is_numeric_dtype(result[col]):
-                    result[col] = pd.to_datetime(result[col])
+                    result[col] = pd.to_datetime(result[col], format="mixed", dayfirst=True)
         except:
             pass
 
