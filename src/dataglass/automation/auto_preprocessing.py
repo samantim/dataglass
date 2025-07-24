@@ -23,6 +23,7 @@ def get_datatypes(data: pd.DataFrame) -> List:
     categorical_columns = []
     datetime_columns = []
     bool_columns = []
+    datetime_dependent_numeric_columns = []
 
     data_types = data_copy.dtypes
     for col, dt in data_types.items():
