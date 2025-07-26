@@ -55,7 +55,7 @@ def calc_missing_ratio(data: pd.DataFrame, col: str) -> float:
     return data[col].isna().sum()/len(data[col])
 
 
-def auto_handle_missing_values(data: pd.DataFrame) -> pd.DataFrame:
+def auto_handle_missing_values(data: pd.DataFrame, verbose: bool = False) -> pd.DataFrame:
     # Get datatypes of all columns
     data_types, numeric_columns, categorical_columns, datetime_columns, bool_columns, datetime_dependent_numeric_columns = get_datatypes(data)
 
