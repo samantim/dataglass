@@ -121,4 +121,20 @@ def auto_handle_missing_values(data: pd.DataFrame, verbose: bool = False) -> pd.
     
 
 
+def auto_handle_duplicates(data: pd.DataFrame, verbose: bool = False) -> pd.DataFrame:
+    # Get datatypes of all columns
+    _, _, categorical_columns, datetime_columns, _, _ = get_datatypes(data)
 
+    # 1: Apply exact duplicate removal based on all columns
+    data = handle_duplicate_values_exact(data)
+
+    # 2: Apply fuzzy matching for categorical and datetime columns
+    fuzzymatching_columns = []
+    fuzzymatching_columns.extend(categorical_columns)
+    fuzzymatching_columns.extend(datetime_columns)
+
+    data = handle_duplicate_values_fuzzy(data, fuzzymatching_columns, (95,100))
+
+    return data
+
+    
