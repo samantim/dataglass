@@ -3,7 +3,7 @@ import numpy as np
 import pytest
 from src.dataglass import *
 from src.dataglass import DataPipeline
-from src.dataglass.automation.auto_preprocessing import auto_handle_missing_values
+from src.dataglass.automation.auto_preprocessing import auto_handle_duplicates, auto_handle_missing_values
 pd.set_option('future.no_silent_downcasting', True)
 
 
@@ -13,8 +13,8 @@ def sample_data() -> pd.DataFrame:
 # | index | name    | age  | income  | gender | country | score | signup_date | loyalty_score | subscription | married |
 # |-------|---------|------|---------|--------|---------|-------|-------------|---------------|--------------|---------|
 # | 0     | Ethan   | 25   | 50000   | Male   | US      | 80    | 2023-01-01  | 27            | NaN          | True    |
-# | 1     | Ethan   | 25   | 50000   | Male   | US      | 80    | NaN         | 27            | NaN          | False   |
-# | 2     | Lili    | 22   | 45000   | NaN    | US      | 70    | 2023-03-01  | 25            | NaN          | True    |
+# | 1     | etan    | 25   | 50000   | Male   | US      | 80    | 2023-01-01  | 27            | NaN          | False   |
+# | 2     | Lili    | 22   | 45000   | NaN    | US      | 70    | NaN         | 25            | NaN          | True    |
 # | 3     | Sophia  | 40   | 80000   | Male   | DE      | 90    | 2023-04-01  | 24            | NaN          | False   |
 # | 4     | Mason   | 35   | 75000   | Female | FR      | 88    | 2023-05-01  | 23            | NaN          | False   |
 # | 5     | Ava     | 28   | 52000   | Male   | US      | 82    | 2023-06-20  | NaN           | Premium      | False   |
@@ -30,37 +30,37 @@ def sample_data() -> pd.DataFrame:
 # | 15    | Harper  | 26   | 300000  | Female | US      | 200   | 2024-04-01  | 12            | Premium      | False   |
 # | 16    | Jack    | 30   | 49000   | Male   | UK      | 77    | 2024-05-01  | 11            | Basic        | True    |
 # | 17    | Evelyn  | 42   | 85000   | Female | DE      | 89    | 2024-06-01  | 10            | Premium      | False   |
-# | 18    | Alex    | 25   | 50000   | Male   | US      | 80    | 2025-01-01  | 9             | Basic        | False   |
+# | 18    | Lily    | 22   | 45000   | Female | DE      | 70    | 2025-04-01  | 8             | Basic        | True    |
 # | 19    | Lily    | 22   | 45000   | Female | DE      | 70    | 2025-04-01  | 8             | Basic        | True    |
 
 
     contents = {
-        "name": ["Ethan", "Ethan", "Lili", "Sophia", "Mason", "Ava", "Noah", "Isabella",
-                 "Lucas", "Mia", "James", "Amelia", "Benjamin", "Jamey", "Sophie", "Harper", "Jack", "Evelyn", "Alex", "Lily"],
+        "name": ["Ethan", "Etan", "Lili", "Sophia", "Mason", "Ava", "Noah", "Isabella",
+                 "Lucas", "Mia", "James", "Amelia", "Benjamin", "Jamey", "Sophie", "Harper", "Jack", "Evelyn", "Lily", "Lily"],
         "age": [25.0, 25, 22, 40, 35, 28, np.nan, 32, 27, 40,
                 29, 33, 24, 41, 31, 26, 30, 42, 25, 22],
         "income": [50000, 50000, 45000, 80000, 75000, 52000, 61000, np.nan, 50000, 100000,
-                58000, 62000, 47000, 200000, 54000, 300000, 49000, 85000, 50000, 45000],
+                58000, 62000, 47000, 200000, 54000, 300000, 49000, 85000, 45000, 45000],
         "gender": ["Male", "Male", np.nan, "Male", "Female", "Male", "Female", "Male", np.nan, "Female",
-                "Male", "Female", "Male", "Male", "Female", "Female", "Male", "Female", "Male", "Female"],
+                "Male", "Female", "Male", "Male", "Female", "Female", "Male", "Female", "Female", "Female"],
         "country": ["US", "US", "US", "DE", "FR", "US", "UK", "DE", "US", "FR",
-                    "US", "DE", "UK", "US", "FR", "US", "UK", "DE", "US", "DE"],
+                    "US", "DE", "UK", "US", "FR", "US", "UK", "DE", "DE", "DE"],
         "score": [80, 80, 70, 90, 88, 82, 85, 78, 76, np.nan,
-                79, 81, 75, 95, 83, 200, 77, 89, 80, 70],
+                79, 81, 75, 95, 83, 200, 77, 89, 70, 70],
         "signup_date": [
-            "2023-01-01", np.nan, "2023-03-01", "2023-04-01", "2023-05-01",
+            "2023-01-01", "2023-01-01", np.nan, "2023-04-01", "2023-05-01",
             "2023-06-20", "2023-07-01", "2023-09-01", np.nan, "2023-10-01",
             "2023-11-01", "2023-12-01", "2024-01-01", "2024-02-01", "2024-03-01",
-            "2024-04-01", "2024-05-01", "2024-06-01", "2025-01-01", "2025-04-01"
+            "2024-04-01", "2024-05-01", "2024-06-01", "2025-04-01", "2025-04-01"
         ],
         "loyalty_score" : [27, 27, 25, 24, 23, np.nan, np.nan, 20, 19,
-                            18,17, 16, 15, 14, 13, 12, 11, 10, 9, 8],
+                            18,17, 16, 15, 14, 13, 12, 11, 10, 8, 8],
         "subscription": [np.nan, np.nan, np.nan, np.nan, np.nan, "Premium", "Basic", np.nan, np.nan, "Premium",
                         "Basic", "Premium", "Basic", "Premiums", "Basic", "Premium", "Basic", "Premium", "Basic", "Basic"],
         "empty_col" : [np.nan,np.nan,np.nan,np.nan,np.nan,np.nan,np.nan,np.nan,np.nan,np.nan,
                        np.nan,np.nan,np.nan,np.nan,np.nan,np.nan,np.nan,np.nan,np.nan,np.nan],
         "married": [True, False, True, False, False, False, np.nan, True, False, False,
-                        False, False, True, False, False, False, True, False, False, True],
+                        False, False, True, False, False, False, True, False, True, True],
 
     }
     data = pd.DataFrame(contents, index=range(20))
@@ -82,7 +82,7 @@ def test_auto_handle_missing(sample_data):
     assert "empty_col" not in result.columns
 
     # Check for filling datetime columns with default value "01-01-1900"
-    assert result.loc[1, "signup_date"] == pd.Timestamp(year=1900, month=1, day=1)
+    assert result.loc[2, "signup_date"] == pd.Timestamp(year=1900, month=1, day=1)
     assert result.loc[8, "signup_date"] == pd.Timestamp(year=1900, month=1, day=1)
 
     # Check the datatype of column signup_date to be datatime64[ns]
@@ -114,3 +114,18 @@ def test_auto_handle_missing(sample_data):
     # Check median imputation for numeric time-independet columns
     assert result.loc[7, "income"] == int(input_data["income"].median(skipna=True))
     assert result.loc[9, "score"] == int(input_data["score"].median(skipna=True))
+
+
+def test_auto_handle_duplicates(sample_data):
+    input_data = sample_data.copy()
+    result = auto_handle_duplicates(input_data)
+
+    # Original data should remain unchanged
+    assert input_data.equals(sample_data)
+
+    # Check exact duplicate removed
+    assert len(result[result["name"] == "Lily"]) == 1
+
+    # Check fuzzy matched removed
+    assert result[result["name"] == "Etan"].empty
+    
