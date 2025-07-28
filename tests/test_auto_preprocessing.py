@@ -21,14 +21,14 @@ def sample_data() -> pd.DataFrame:
 # | 6     | Noah    | NaN  | 61000   | Female | UK      | 85    | 2023-07-01  | NaN           | Basic        | NaN     |
 # | 7     | Isabella| 32   | NaN     | Male   | DE      | 78    | 2023-09-01  | 20            | NaN          | True    |
 # | 8     | Lucas   | 27   | 50000   | NaN    | US      | 76    | NaN         | 19            | NaN          | False   |
-# | 9     | Mia     | 45   | 100000  | Female | FR      | NaN   | 2023-10-01  | 18            | Premium      | False   |
+# | 9     | Mia     | 40   | 100000  | Female | FR      | NaN   | 2023-10-01  | 18            | Premium      | False   |
 # | 10    | James   | 29   | 58000   | Male   | US      | 79    | 2023-11-01  | 17            | Basic        | False   |
 # | 11    | Amelia  | 33   | 62000   | Female | DE      | 81    | 2023-12-01  | 16            | Premium      | False   |
 # | 12    | Benjamin| 24   | 47000   | Male   | UK      | 75    | 2024-01-01  | 15            | Basic        | True    |
-# | 13    | Jamey   | 55   | 200000  | Male   | US      | 95    | 2024-02-01  | 14            | Premium      | False   |
+# | 13    | Jamey   | 41   | 200000  | Male   | US      | 95    | 2024-02-01  | 14            | Premium      | False   |
 # | 14    | Sophie  | 31   | 54000   | Female | FR      | 83    | 2024-03-01  | 13            | Basic        | False   |
 # | 15    | Harper  | 26   | 300000  | Female | US      | 200   | 2024-04-01  | 12            | Premium      | False   |
-# | 16    | Jack    | 60   | 49000   | Male   | UK      | 77    | 2024-05-01  | 11            | Basic        | True    |
+# | 16    | Jack    | 30   | 49000   | Male   | UK      | 77    | 2024-05-01  | 11            | Basic        | True    |
 # | 17    | Evelyn  | 42   | 85000   | Female | DE      | 89    | 2024-06-01  | 10            | Premium      | False   |
 # | 18    | Alex    | 25   | 50000   | Male   | US      | 80    | 2025-01-01  | 9             | Basic        | False   |
 # | 19    | Lily    | 22   | 45000   | Female | DE      | 70    | 2025-04-01  | 8             | Basic        | True    |
@@ -37,8 +37,8 @@ def sample_data() -> pd.DataFrame:
     contents = {
         "name": ["Ethan", "Ethan", "Lili", "Sophia", "Mason", "Ava", "Noah", "Isabella",
                  "Lucas", "Mia", "James", "Amelia", "Benjamin", "Jamey", "Sophie", "Harper", "Jack", "Evelyn", "Alex", "Lily"],
-        "age": [25.0, 25, 22, 40, 35, 28, np.nan, 32, 27, 45,
-                29, 33, 24, 55, 31, 26, 60, 42, 25, 22],
+        "age": [25.0, 25, 22, 40, 35, 28, np.nan, 32, 27, 40,
+                29, 33, 24, 41, 31, 26, 30, 42, 25, 22],
         "income": [50000, 50000, 45000, 80000, 75000, 52000, 61000, np.nan, 50000, 100000,
                 58000, 62000, 47000, 200000, 54000, 300000, 49000, 85000, 50000, 45000],
         "gender": ["Male", "Male", np.nan, "Male", "Female", "Male", "Female", "Male", np.nan, "Female",
@@ -71,7 +71,7 @@ def sample_data() -> pd.DataFrame:
 #   Automatic Handle Missing functions tests   #
 # ============================================ #
 
-def test_handle_missing_drop(sample_data):
+def test_auto_handle_missing(sample_data):
     input_data = sample_data.copy()
     result = auto_handle_missing_values(input_data)
 
@@ -89,7 +89,7 @@ def test_handle_missing_drop(sample_data):
     assert pd.api.types.is_datetime64_any_dtype(result["signup_date"].dtype)
 
     # Check categorical variable is filled with mode
-    assert result.loc[2, "gender"] == "Male"
+    assert result.loc[2, "gender"] == input_data["gender"].mode(dropna=True)[0]
 
     # Check categorical variable is filled with "Empty"
     assert result.loc[4, "subscription"] == "Empty"
@@ -97,3 +97,20 @@ def test_handle_missing_drop(sample_data):
     # Check imputing boolean columns with False
     assert result.loc[6, "married"] == False
 
+    # Check time-based interpolation for numeric time-dependet columns
+    # Convert the signup_date to pandas datetime for date delta calculations
+    signup_dates = pd.to_datetime(input_data["signup_date"], format="%Y-%m-%d")
+    # Date distance between the row before and the row after NaN area
+    date_delta = (signup_dates[7] - signup_dates[4]).days
+    # Loyalty score distance between the row before and the row after NaN area
+    loyalty_score_delta = input_data.loc[7,"loyalty_score"] - input_data.loc[4,"loyalty_score"]
+    # Calculate the expected results based on the time-based interpolation formula
+    assert result.loc[5,"loyalty_score"] == int(result.loc[4,"loyalty_score"] + (signup_dates[5] - signup_dates[4]).days / date_delta * loyalty_score_delta)
+    assert result.loc[6,"loyalty_score"] == int(result.loc[4,"loyalty_score"] + (signup_dates[6] - signup_dates[4]).days / date_delta * loyalty_score_delta)
+
+    # Check mean imputation for numeric time-independet columns
+    assert result.loc[6, "age"] == int(input_data["age"].mean(skipna=True))
+
+    # Check median imputation for numeric time-independet columns
+    assert result.loc[7, "income"] == int(input_data["income"].median(skipna=True))
+    assert result.loc[9, "score"] == int(input_data["score"].median(skipna=True))
