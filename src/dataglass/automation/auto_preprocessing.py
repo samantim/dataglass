@@ -45,7 +45,7 @@ def get_datatypes(data: pd.DataFrame) -> List:
     if len(datetime_columns) > 0:
         time_reference_col = datetime_columns[0]
         # Correlation more than 0.3 is considered as dependency
-        datetime_dependent_numeric_columns = [col for col in numeric_columns if corr.loc[time_reference_col, col] > 0.3]
+        datetime_dependent_numeric_columns = [col for col in numeric_columns if abs(corr.loc[time_reference_col, col]) > 0.3]
     
     return data_types, numeric_columns, categorical_columns, datetime_columns, bool_columns, datetime_dependent_numeric_columns
 
