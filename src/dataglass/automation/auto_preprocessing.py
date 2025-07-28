@@ -111,7 +111,7 @@ def auto_handle_missing_values(data: pd.DataFrame, verbose: bool = False) -> pd.
             data[col] = handle_missing_values_datatype_imputation(data[[col]], NumericDatatypeImputationMethod.MEAN)
         else:
             # In skewed distributions, median is a better choice for imputation
-            data[col] = handle_missing_values_datatype_imputation(data[[col]], NumericDatatypeImputationMethod.MODE)
+            data[col] = handle_missing_values_datatype_imputation(data[[col]], NumericDatatypeImputationMethod.MEDIAN)
 
     # 7: This datatype change is necessary to reset datatypes to their own nature, because they may be changed unintentionally in interpolation
     for col in data.columns:
