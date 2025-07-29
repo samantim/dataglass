@@ -2,8 +2,6 @@ import pandas as pd
 import numpy as np
 import pytest
 from src.dataglass import *
-from src.dataglass import DataPipeline
-from src.dataglass.automation.auto_preprocessing import auto_handle_duplicates, auto_handle_missing_values
 pd.set_option('future.no_silent_downcasting', True)
 
 
@@ -67,6 +65,42 @@ def sample_data() -> pd.DataFrame:
     return data
 
 
+@pytest.fixture
+def generate_test_data():
+    def _generate(case: str):
+        np.random.seed(42)
+
+        if case == "univariate_zscore":
+            return pd.DataFrame({
+                "A": np.concatenate([np.random.normal(0, 1, 98), [8, 9]])
+            })
+
+        elif case == "univariate_iqr":
+            return pd.DataFrame({
+                "B": np.concatenate([np.random.exponential(scale=1, size=98), [15, 20]])
+            })
+
+        elif case == "multivariate_lof":
+            base = np.random.normal(0, 1, size=(250, 3))
+            base[0:5] += 10  # inject multivariate outliers
+            return pd.DataFrame(base, columns=["X", "Y", "Z"])
+
+        elif case == "multivariate_iforest":
+            base = np.random.normal(0, 1, size=(15000, 30))
+            base[0:10] += 15
+            columns = [f"f{i}" for i in range(30)]
+            return pd.DataFrame(base, columns=columns)
+
+        elif case == "no_action":
+            return pd.DataFrame({
+                "C": np.concatenate([np.random.exponential(scale=1, size=198), [30, 35]])
+            })
+
+        else:
+            raise ValueError("Unknown test case.")
+    return _generate
+
+
 # ============================================ #
 #   Automatic Handle Missing functions tests   #
 # ============================================ #
@@ -116,6 +150,10 @@ def test_auto_handle_missing(sample_data):
     assert result.loc[9, "score"] == int(input_data["score"].median(skipna=True))
 
 
+# ============================================ #
+#  Automatic Handle Duplicates functions tests #
+# ============================================ #
+
 def test_auto_handle_duplicates(sample_data):
     input_data = sample_data.copy()
     result = auto_handle_duplicates(input_data)
@@ -128,4 +166,38 @@ def test_auto_handle_duplicates(sample_data):
 
     # Check fuzzy matched removed
     assert result[result["name"] == "Etan"].empty
+
+
+# ============================================ #
+#   Automatic Handle Outliers functions tests  #
+# ============================================ #
+
+def test_univariate_zscore_handling(generate_test_data):
+    input_data = generate_test_data("univariate_zscore")
+    result = auto_handle_outliers(input_data)
+    assert result["A"].max() < 8
+
+
+def test_univariate_iqr_handling(generate_test_data):
+    input_data = generate_test_data("univariate_iqr")
+    result = auto_handle_outliers(input_data)
+    assert result["B"].max() < 20
+
+
+def test_multivariate_lof_dropping(generate_test_data):
+    input_data = generate_test_data("multivariate_lof")
+    result = auto_handle_outliers(input_data)
+    assert result.shape[0] < input_data.shape[0]
+
+
+def test_multivariate_iforest_dropping(generate_test_data):
+    input_data = generate_test_data("multivariate_iforest")
+    result = auto_handle_outliers(input_data)
+    assert result.shape[0] < input_data.shape[0]
+
+
+def test_no_action_skewed_data(generate_test_data):
+    input_data = generate_test_data("no_action")
+    result = auto_handle_outliers(input_data)
+    assert np.allclose(result["C"], input_data["C"])
     
