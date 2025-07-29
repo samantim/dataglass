@@ -1,7 +1,11 @@
 from .auto_preprocessing import (
-    get_datatypes
+    auto_handle_missing_values,
+    auto_handle_duplicates,
+    auto_handle_outliers
 )
 
 __all__ = [
-    "get_datatypes"
+    "auto_handle_missing_values",
+    "auto_handle_duplicates",
+    "auto_handle_outliers"
 ]

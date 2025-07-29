@@ -1,14 +1,14 @@
 from ..preprocessing import *
 import pandas as pd
-from typing import List
+from typing import List, Dict
 
-def get_datatypes(data: pd.DataFrame) -> List:
+def _get_datatypes(data: pd.DataFrame) -> List:
     # Make a copy of data
     data_copy = data.copy()
 
     # Remove columns with 100% missing values
     for col in data_copy.columns:
-        missing_ratio = calc_missing_ratio(data_copy, col)
+        missing_ratio = _calc_missing_ratio(data_copy, col)
         if missing_ratio == 1:
             data_copy = data_copy.drop(columns=[col])
 
@@ -50,18 +50,18 @@ def get_datatypes(data: pd.DataFrame) -> List:
     return data_types, numeric_columns, categorical_columns, datetime_columns, bool_columns, datetime_dependent_numeric_columns
 
 
-def calc_missing_ratio(data: pd.DataFrame, col: str) -> float:
+def _calc_missing_ratio(data: pd.DataFrame, col: str) -> float:
     # Calculate the ratio of missing values
     return data[col].isna().sum()/len(data[col])
 
 
 def auto_handle_missing_values(data: pd.DataFrame, verbose: bool = False) -> pd.DataFrame:
     # Get datatypes of all columns
-    data_types, numeric_columns, categorical_columns, datetime_columns, bool_columns, datetime_dependent_numeric_columns = get_datatypes(data)
+    data_types, numeric_columns, categorical_columns, datetime_columns, bool_columns, datetime_dependent_numeric_columns = _get_datatypes(data)
 
     # 1: Remove columns with 100% missing values
     for col in data.columns:
-        missing_ratio = calc_missing_ratio(data, col)
+        missing_ratio = _calc_missing_ratio(data, col)
         if missing_ratio == 1:
             data = data.drop(columns=[col])
 
@@ -76,7 +76,7 @@ def auto_handle_missing_values(data: pd.DataFrame, verbose: bool = False) -> pd.
 
     # 4: Handle categorical variables with more than 30% missing values
     for col in categorical_columns:
-        missing_ratio = calc_missing_ratio(data, col)
+        missing_ratio = _calc_missing_ratio(data, col)
         if missing_ratio >= 0.3:
             data[col] = data[col].fillna("Empty")
         else:
@@ -92,7 +92,7 @@ def auto_handle_missing_values(data: pd.DataFrame, verbose: bool = False) -> pd.
         # If it is a time serie dataset
         # This scenario is only applied to datetime dependent numeric columns
         for col in datetime_dependent_numeric_columns:
-            missing_ratio = calc_missing_ratio(data, col)
+            missing_ratio = _calc_missing_ratio(data, col)
             if missing_ratio <= 0.1:
                 # Interpolation by time whould be smooth
                 data[col] = handle_missing_values_adjacent_value_imputation(data[[datetime_columns[0], col]], AdjacentImputationMethod.INTERPOLATION_TIME, datetime_columns[0])[col]
@@ -118,12 +118,11 @@ def auto_handle_missing_values(data: pd.DataFrame, verbose: bool = False) -> pd.
         data[col] = data[col].astype(data_types[col])
 
     return data
-    
 
 
 def auto_handle_duplicates(data: pd.DataFrame, verbose: bool = False) -> pd.DataFrame:
     # Get datatypes of all columns
-    _, _, categorical_columns, datetime_columns, _, _ = get_datatypes(data)
+    _, _, categorical_columns, datetime_columns, _, _ = _get_datatypes(data)
 
     # 1: Apply exact duplicate removal based on all columns
     data = handle_duplicate_values_exact(data)
@@ -137,4 +136,108 @@ def auto_handle_duplicates(data: pd.DataFrame, verbose: bool = False) -> pd.Data
 
     return data
 
+
+def _decide_outlier_detection_method(data: pd.DataFrame, verbose: bool = False) -> Dict[str, HandleOutlierMethod | str]:
+    # Automatically decide outlier detection strategy for each numeric column (univariate)
+    # or for the whole set (multivariate), based on dataset characteristics.
+    # Assumes missing values are already handled.
     
+    # Get datatypes of all columns
+    _, numeric_columns, _, _, _, _ = _get_datatypes(data)
+
+    methods = {}
+    n_samples = data.shape[0]
+    n_features = len(numeric_columns)
+
+    # Decide between per-column or multivariate detection
+    force_per_column = (
+        n_features == 1 or
+        n_samples < 200 or
+        any(data[col].nunique() < 10 for col in numeric_columns)
+    )
+
+    if force_per_column:
+        # Per-column (univariate) strategy: only IQR and Z-score are appropriate
+        for col in numeric_columns:
+            col_data = data[col]
+            skew = col_data.skew()
+            n_unique = col_data.nunique()
+
+            if abs(skew) <= 1 and n_samples >= 100 and n_unique >= 20:
+                methods[col] = DetectOutlierMethod.ZSCORE
+            else:
+                methods[col] = DetectOutlierMethod.IQR
+    else:
+        # Multivariate strategy: LOF or Isolation Forest
+        high_dimensional = n_features > 20
+        large_dataset = n_samples > 10000
+
+        if high_dimensional or large_dataset:
+            methods["__multivariate__"] = DetectOutlierMethod.ISOLATION_FOREST
+        else:
+            methods["__multivariate__"] = DetectOutlierMethod.LOCAL_OUTLIER_FACTOR
+
+    return methods
+
+
+def _decide_outlier_handling_method(data: pd.DataFrame, detected_outliers: Dict[str, List[int]]) -> Dict[str, HandleOutlierMethod | None]:
+    # Decide whether and how to handle outliers per column using only data characteristics.
+
+    methods = {}
+
+    for col, idxs in detected_outliers.items():
+
+        outliers_ratio = len(idxs) / len(data[col])
+
+        skew = data[col].skew()
+        std = data[col].std()
+        iqr = data[col].quantile(0.75) - data[col].quantile(0.25)
+        rel_range = (data[col].max() - data[col].min()) / (data[col].median() + 1e-6)
+
+        if (
+            outliers_ratio < 0.05 and # very few points
+            rel_range > 10 and # huge spread vs. centre
+            abs(skew) > 2 and # very strongly skewed
+            std > iqr * 2 # heavy tails
+        ):
+            methods[col] = None # No need to action because the outliers are likely meaningful variations (e.g., Income, Product sales volume, and Web page views)
+        elif abs(skew) > 1:
+            methods[col] = HandleOutlierMethod.REPLACE_WITH_MEDIAN # strongly skewed
+        else:
+            methods[col] = HandleOutlierMethod.CAP_WITH_BOUNDARIES # otherwise keep shape, just cap
+
+    return methods
+
+
+def auto_handle_outliers(data: pd.DataFrame, verbose: bool = False) -> pd.DataFrame:
+    # Perform detection and handling of outliers based on detection methods decided earlier.
+
+    # Get datatypes of all columns
+    _, numeric_columns, _, _, _, _ = _get_datatypes(data)
+    
+    detection_methods = _decide_outlier_detection_method(data, verbose=True)
+
+    # Determine if it's multivariate or per-column
+    is_multivariate = "__multivariate__" in detection_methods
+
+    if is_multivariate:
+        # Multivariate outlier detection
+        detection_method = detection_methods["__multivariate__"]
+        outliers, _ = detect_outliers(data, detect_outlier_method=detection_method, columns_subset=numeric_columns)
+
+        # Drop all outlier rows as they are meaningful together
+        data = data.drop(index=outliers[numeric_columns[0]])
+
+    else:
+        # Per-column univariate detection
+
+        for col, detection_method in detection_methods.items():
+            outliers, boundaries = detect_outliers(data[[col]], detect_outlier_method=detection_method)
+            if col in outliers.keys():
+                # Decide how to handle each column
+                handling_method = _decide_outlier_handling_method(data[[col]], outliers)[col]
+
+                if not handling_method is None:
+                    data[col] = handle_outliers(data=data[[col]], outliers=outliers, boundaries=boundaries, handle_outlier_method=handling_method)
+
+    return data
