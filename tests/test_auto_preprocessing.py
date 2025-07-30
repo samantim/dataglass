@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import pytest
 from src.dataglass import *
+from src.dataglass.automation.auto_preprocessing import _get_datatypes
 pd.set_option('future.no_silent_downcasting', True)
 
 
@@ -107,7 +108,11 @@ def generate_test_data():
 
 def test_auto_handle_missing(sample_data):
     input_data = sample_data.copy()
-    result = auto_handle_missing_values(input_data)
+
+    # Get datatypes of all columns
+    data_types, numeric_columns, categorical_columns, datetime_columns, bool_columns, datetime_dependent_numeric_columns = _get_datatypes(input_data)
+
+    result = auto_handle_missing_values(input_data, data_types, numeric_columns, categorical_columns, datetime_columns, bool_columns, datetime_dependent_numeric_columns)
 
     # Check for elimination of empty columns
     assert "empty_col" not in result.columns
@@ -153,7 +158,11 @@ def test_auto_handle_missing(sample_data):
 
 def test_auto_handle_duplicates(sample_data):
     input_data = sample_data.copy()
-    result = auto_handle_duplicates(input_data)
+
+    # Get datatypes of all columns
+    _, _, categorical_columns, datetime_columns, _, _ = _get_datatypes(input_data)
+
+    result = auto_handle_duplicates(input_data, categorical_columns, datetime_columns)
 
     # Check exact duplicate removed
     assert len(result[result["name"] == "Lily"]) == 1
@@ -168,30 +177,54 @@ def test_auto_handle_duplicates(sample_data):
 
 def test_auto_handle_outliers_univariate_zscore(generate_test_data):
     input_data = generate_test_data("univariate_zscore")
-    result = auto_handle_outliers(input_data)
+
+    # Get datatypes of all columns
+    _, numeric_columns, _, _, _, _ = _get_datatypes(input_data)
+
+    result = auto_handle_outliers(input_data, numeric_columns)
     assert result["A"].max() < 8
 
 
 def test_auto_handle_outliers_univariate_iqr(generate_test_data):
     input_data = generate_test_data("univariate_iqr")
-    result = auto_handle_outliers(input_data)
+
+    # Get datatypes of all columns
+    _, numeric_columns, _, _, _, _ = _get_datatypes(input_data)
+
+    result = auto_handle_outliers(input_data, numeric_columns)
+    
     assert result["B"].max() < 20
 
 
 def test_auto_handle_outliers_multivariate_lof_drop(generate_test_data):
     input_data = generate_test_data("multivariate_lof")
-    result = auto_handle_outliers(input_data)
+    
+    # Get datatypes of all columns
+    _, numeric_columns, _, _, _, _ = _get_datatypes(input_data)
+
+    result = auto_handle_outliers(input_data, numeric_columns)
+    
     assert result.shape[0] < input_data.shape[0]
 
 
 def test_auto_handle_outliers_multivariate_isolationforest_drop(generate_test_data):
     input_data = generate_test_data("multivariate_isolationforest")
-    result = auto_handle_outliers(input_data)
+    
+    # Get datatypes of all columns
+    _, numeric_columns, _, _, _, _ = _get_datatypes(input_data)
+
+    result = auto_handle_outliers(input_data, numeric_columns)
+    
     assert result.shape[0] < input_data.shape[0]
 
 
 def test_auto_handle_outliers_no_action(generate_test_data):
     input_data = generate_test_data("no_action")
-    result = auto_handle_outliers(input_data)
+    
+    # Get datatypes of all columns
+    _, numeric_columns, _, _, _, _ = _get_datatypes(input_data)
+
+    result = auto_handle_outliers(input_data, numeric_columns)
+    
     assert np.allclose(result["C"], input_data["C"])
     
