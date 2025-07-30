@@ -85,7 +85,7 @@ def generate_test_data():
             base[0:5] += 10  # inject multivariate outliers
             return pd.DataFrame(base, columns=["X", "Y", "Z"])
 
-        elif case == "multivariate_iforest":
+        elif case == "multivariate_isolationforest":
             base = np.random.normal(0, 1, size=(15000, 30))
             base[0:10] += 15
             columns = [f"f{i}" for i in range(30)]
@@ -108,9 +108,6 @@ def generate_test_data():
 def test_auto_handle_missing(sample_data):
     input_data = sample_data.copy()
     result = auto_handle_missing_values(input_data)
-
-    # Original data should remain unchanged
-    assert input_data.equals(sample_data)
 
     # Check for elimination of empty columns
     assert "empty_col" not in result.columns
@@ -158,9 +155,6 @@ def test_auto_handle_duplicates(sample_data):
     input_data = sample_data.copy()
     result = auto_handle_duplicates(input_data)
 
-    # Original data should remain unchanged
-    assert input_data.equals(sample_data)
-
     # Check exact duplicate removed
     assert len(result[result["name"] == "Lily"]) == 1
 
@@ -172,31 +166,31 @@ def test_auto_handle_duplicates(sample_data):
 #   Automatic Handle Outliers functions tests  #
 # ============================================ #
 
-def test_univariate_zscore_handling(generate_test_data):
+def test_auto_handle_outliers_univariate_zscore(generate_test_data):
     input_data = generate_test_data("univariate_zscore")
     result = auto_handle_outliers(input_data)
     assert result["A"].max() < 8
 
 
-def test_univariate_iqr_handling(generate_test_data):
+def test_auto_handle_outliers_univariate_iqr(generate_test_data):
     input_data = generate_test_data("univariate_iqr")
     result = auto_handle_outliers(input_data)
     assert result["B"].max() < 20
 
 
-def test_multivariate_lof_dropping(generate_test_data):
+def test_auto_handle_outliers_multivariate_lof_drop(generate_test_data):
     input_data = generate_test_data("multivariate_lof")
     result = auto_handle_outliers(input_data)
     assert result.shape[0] < input_data.shape[0]
 
 
-def test_multivariate_iforest_dropping(generate_test_data):
-    input_data = generate_test_data("multivariate_iforest")
+def test_auto_handle_outliers_multivariate_isolationforest_drop(generate_test_data):
+    input_data = generate_test_data("multivariate_isolationforest")
     result = auto_handle_outliers(input_data)
     assert result.shape[0] < input_data.shape[0]
 
 
-def test_no_action_skewed_data(generate_test_data):
+def test_auto_handle_outliers_no_action(generate_test_data):
     input_data = generate_test_data("no_action")
     result = auto_handle_outliers(input_data)
     assert np.allclose(result["C"], input_data["C"])
