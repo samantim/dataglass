@@ -179,9 +179,9 @@ def test_auto_handle_outliers_univariate_zscore(generate_test_data):
     input_data = generate_test_data("univariate_zscore")
 
     # Get datatypes of all columns
-    _, numeric_columns, _, _, _, _ = _get_datatypes(input_data)
+    data_types, numeric_columns, _, _, _, _ = _get_datatypes(input_data)
 
-    result = auto_handle_outliers(input_data, numeric_columns)
+    result = auto_handle_outliers(input_data, numeric_columns, data_types)
     assert result["A"].max() < 8
 
 
@@ -189,9 +189,9 @@ def test_auto_handle_outliers_univariate_iqr(generate_test_data):
     input_data = generate_test_data("univariate_iqr")
 
     # Get datatypes of all columns
-    _, numeric_columns, _, _, _, _ = _get_datatypes(input_data)
+    data_types, numeric_columns, _, _, _, _ = _get_datatypes(input_data)
 
-    result = auto_handle_outliers(input_data, numeric_columns)
+    result = auto_handle_outliers(input_data, numeric_columns, data_types)
     
     assert result["B"].max() < 20
 
@@ -200,9 +200,9 @@ def test_auto_handle_outliers_multivariate_lof_drop(generate_test_data):
     input_data = generate_test_data("multivariate_lof")
     
     # Get datatypes of all columns
-    _, numeric_columns, _, _, _, _ = _get_datatypes(input_data)
+    data_types, numeric_columns, _, _, _, _ = _get_datatypes(input_data)
 
-    result = auto_handle_outliers(input_data, numeric_columns)
+    result = auto_handle_outliers(input_data, numeric_columns, data_types)
     
     assert result.shape[0] < input_data.shape[0]
 
@@ -211,9 +211,9 @@ def test_auto_handle_outliers_multivariate_isolationforest_drop(generate_test_da
     input_data = generate_test_data("multivariate_isolationforest")
     
     # Get datatypes of all columns
-    _, numeric_columns, _, _, _, _ = _get_datatypes(input_data)
+    data_types, numeric_columns, _, _, _, _ = _get_datatypes(input_data)
 
-    result = auto_handle_outliers(input_data, numeric_columns)
+    result = auto_handle_outliers(input_data, numeric_columns, data_types)
     
     assert result.shape[0] < input_data.shape[0]
 
@@ -222,9 +222,9 @@ def test_auto_handle_outliers_no_action(generate_test_data):
     input_data = generate_test_data("no_action")
     
     # Get datatypes of all columns
-    _, numeric_columns, _, _, _, _ = _get_datatypes(input_data)
+    data_types, numeric_columns, _, _, _, _ = _get_datatypes(input_data)
 
-    result = auto_handle_outliers(input_data, numeric_columns)
+    result = auto_handle_outliers(input_data, numeric_columns, data_types)
     
     assert np.allclose(result["C"], input_data["C"])
     
@@ -242,4 +242,4 @@ def test_handle_missing_drop(sample_data):
     assert result.shape[1] < input_data.shape[1]
     # Check for missing value and outlier handling
     input_data.loc[9, "score"] = input_data["score"].median()
-    assert result.loc[15, "score"] == input_data.drop(index=[1,19])["score"].median()
+    assert result.loc[15, "score"] == int(input_data.drop(index=[1,19])["score"].median())
