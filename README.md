@@ -473,6 +473,7 @@ All other dependencies will be installed automatically via `pip install dataglas
 
 - ✅ Preprocessing Modules  
 - ✅ Custom Pipelines  
+- ✅ Automatic Preprocessing
 - ⏳ Exploratory Data Analysis (EDA) 
 - ⏳ Machine Learning Modules
 
