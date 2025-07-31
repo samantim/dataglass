@@ -2,7 +2,22 @@
 
 **A modular and lightweight library for preprocessing, analysis, and modeling structured datasets in Python.**
 
-`dataglass` provides an easy-to-use yet powerful framework to handle essential preprocessing tasks such as missing value handling, duplicate removal, outlier detection and management, feature encoding, type conversion, and feature scaling — all designed to integrate with custom pipeline workflows.
+`dataglass` provides an easy-to-use yet powerful framework to handle essential preprocessing tasks such as missing value handling, duplicate removal, outlier detection and management, feature encoding, type conversion, and feature scaling — all designed to integrate with custom pipeline workflows. dataglass introduces intelligent automation which dynamically adapting preprocessing steps based on dataset characteristics, minimizing manual configuration and accelerating your workflow.
+
+---
+
+## 🤖 Auto-Preprocessing (New!)
+
+`dataglass` now features an intelligent auto-preprocessing module that dynamically constructs the optimal pipeline based on your dataset’s characteristics, so no manual configuration required.
+
+Just call a single function:
+
+```python
+df_cleaned = dg.auto_preprocess_for_analysis(
+    data = df,
+    verbose = True      # Show decisions and intermediate steps in a log file
+)
+```
 
 ---
 
