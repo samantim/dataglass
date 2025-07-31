@@ -1,8 +1,12 @@
 from ..preprocessing import *
 import pandas as pd
 from typing import List, Dict
+import logging
 
-def _get_datatypes(data: pd.DataFrame) -> List:
+# Config logging 
+logging.basicConfig(filename="auto_preprocess.log", filemode="w", level=logging.INFO)
+
+def _get_datatypes(data: pd.DataFrame, verbose: bool = False) -> List:
     # It returns all column datatypes as well as seperating them in different list based on their types
 
     # Find columns with 100% missing values
@@ -50,6 +54,9 @@ def _get_datatypes(data: pd.DataFrame) -> List:
         # Correlation more than 0.3 is considered as dependency
         datetime_dependent_numeric_columns = [col for col in numeric_columns if abs(corr.loc[time_reference_col, col]) > 0.3]
     
+    # Log data shape and types before any change
+    if verbose: logging.info(f"Data shape is: {data.shape}\nInitial datatypes are:\n{data.dtypes}")
+
     return data_types, numeric_columns, categorical_columns, datetime_columns, bool_columns, datetime_dependent_numeric_columns
 
 
@@ -62,17 +69,21 @@ def auto_handle_missing_values(data: pd.DataFrame, data_types: List, numeric_col
                                datetime_columns: List, bool_columns: List, datetime_dependent_numeric_columns: List, verbose: bool = False) -> pd.DataFrame:
     # It handles all missing values automatically in different steps
 
+    if verbose: logging.info("\nHandling missing values:")
+
     # 1: Remove columns with 100% missing values
     for col in data.columns:
         missing_ratio = _calc_missing_ratio(data, col)
         if missing_ratio == 1:
             data = data.drop(columns=[col])
+            if verbose: logging.info(f"Column '{col}' was empty and get deleted.")
 
     # 2: Handle missing values of datetime columns
     # Missing values are imputed by 1900-01-01 timestamp
     for col in datetime_columns:
         if data[col].isna().sum() > 0:
             data[col] = data[col].fillna(pd.Timestamp(year=1900, month=1, day=1))
+            if verbose: logging.info(f"Column '{col}' had some NaN values which are imputed by '01-01-1900'.")
 
     # 3: Datatype heuristic inference to unify all datetime formats
     data[datetime_columns] = convert_datatype_auto(data[datetime_columns])
@@ -82,12 +93,18 @@ def auto_handle_missing_values(data: pd.DataFrame, data_types: List, numeric_col
         missing_ratio = _calc_missing_ratio(data, col)
         if missing_ratio >= 0.3:
             data[col] = data[col].fillna("Empty")
-        else:
+            if verbose: logging.info(f"Column '{col}' is categorical and had more than 30% NaN values which are imputed by 'Empty'.")
+        elif missing_ratio > 0:
             data[col] = data[col].fillna(data[col].mode()[0])
+            if verbose: logging.info(f"Column '{col}' is categorical and had less than 30% NaN values which are imputed by the most used value of that column (mode).")
+
 
     # 5: Impute bool values with False, as it is the safer value
     for col in bool_columns:
-        data[col] = data[col].fillna(0)
+        if data[col].isna().sum() > 0:
+            data[col] = data[col].fillna(0)
+            if verbose: logging.info(f"Column '{col}' is boolean and missing values are imputed by 'False'.")
+
 
     # 6: Handle numeric columns
     # Check if it is a time series data
@@ -96,25 +113,33 @@ def auto_handle_missing_values(data: pd.DataFrame, data_types: List, numeric_col
         # This scenario is only applied to datetime dependent numeric columns
         for col in datetime_dependent_numeric_columns:
             missing_ratio = _calc_missing_ratio(data, col)
-            if missing_ratio <= 0.1:
-                # Interpolation by time whould be smooth
-                data[col] = handle_missing_values_adjacent_value_imputation(data[[datetime_columns[0], col]], AdjacentImputationMethod.INTERPOLATION_TIME, datetime_columns[0])[col]
-            else:
-                # Imputation by ffill and bfill is more reasonable (bfill is used to ensure that the first row is also imputed)
-                data[col] = handle_missing_values_adjacent_value_imputation(data[[col]], AdjacentImputationMethod.FORWARD)
-                data[col] = handle_missing_values_adjacent_value_imputation(data[[col]], AdjacentImputationMethod.BACKWARD)
+            if missing_ratio > 0:
+                if missing_ratio <= 0.1:
+                    # Interpolation by time whould be smooth
+                    data[col] = handle_missing_values_adjacent_value_imputation(data[[datetime_columns[0], col]], AdjacentImputationMethod.INTERPOLATION_TIME, datetime_columns[0])[col]
+                    if verbose: logging.info(f"Column '{col}' is numeric and missing values are imputed by time-based interpolation. Because the dataset is a time-series and '{col}' is datetime-dependent.")
+                else:
+                    # Imputation by ffill and bfill is more reasonable (bfill is used to ensure that the first row is also imputed)
+                    data[col] = handle_missing_values_adjacent_value_imputation(data[[col]], AdjacentImputationMethod.FORWARD)
+                    data[col] = handle_missing_values_adjacent_value_imputation(data[[col]], AdjacentImputationMethod.BACKWARD)
+                    if verbose: logging.info(f"Column '{col}' is numeric and missing values are imputed by forward/backward fill, due to large number of missings, although the dataset is a time-series and '{col}' is datetime-dependent.")
+
 
     # If it is not a TS dataset or 
     # there are some datetime independent columns or 
     # there are some NaN values remained from the TS related approaches
     for col in numeric_columns:
-        skew = abs(data[col].skew())
-        # Skew < 1 is considered as partially normally distributed, and mean can be valid for missing values
-        if skew < 1:
-            data[col] = handle_missing_values_datatype_imputation(data[[col]], NumericDatatypeImputationMethod.MEAN)
-        else:
-            # In skewed distributions, median is a better choice for imputation
-            data[col] = handle_missing_values_datatype_imputation(data[[col]], NumericDatatypeImputationMethod.MEDIAN)
+        if data[col].isna().sum() > 0:
+            skew = abs(data[col].skew())
+            # Skew < 1 is considered as partially normally distributed, and mean can be valid for missing values
+            if skew < 1:
+                data[col] = handle_missing_values_datatype_imputation(data[[col]], NumericDatatypeImputationMethod.MEAN)
+                if verbose: logging.info(f"Column '{col}' is numeric and missing values are imputed by mean, as the distribution is not very skewed.")
+            else:
+                # In skewed distributions, median is a better choice for imputation
+                data[col] = handle_missing_values_datatype_imputation(data[[col]], NumericDatatypeImputationMethod.MEDIAN)
+                if verbose: logging.info(f"Column '{col}' is numeric and missing values are imputed by median, as the distribution is strongly skewed.")
+
 
     # 7: This datatype change is necessary to reset datatypes to their own nature, because they may be changed unintentionally in interpolation
     for col in data.columns:
@@ -126,8 +151,13 @@ def auto_handle_missing_values(data: pd.DataFrame, data_types: List, numeric_col
 def auto_handle_duplicates(data: pd.DataFrame, categorical_columns: List, datetime_columns: List, verbose: bool = False) -> pd.DataFrame:
     # It eliminates duplicate values automatically based on exact and fuzzy matching
 
+    n_rows = data.shape[0]
+
     # 1: Apply exact duplicate removal based on all columns
     data = handle_duplicate_values_exact(data)
+    if verbose and n_rows - data.shape[0] > 0: logging.info(f"{n_rows - data.shape[0]} row(s) are dropped as duplicates due to exact matching.")
+
+    n_rows = data.shape[0]
 
     # 2: Apply fuzzy matching for categorical and datetime columns
     fuzzymatching_columns = []
@@ -135,6 +165,7 @@ def auto_handle_duplicates(data: pd.DataFrame, categorical_columns: List, dateti
     fuzzymatching_columns.extend(datetime_columns)
 
     data = handle_duplicate_values_fuzzy(data, fuzzymatching_columns, (95,100))
+    if verbose and n_rows - data.shape[0] > 0: logging.info(f"{n_rows - data.shape[0]} row(s) are dropped as duplicates due to fuzzy matching with at least 95% similarity.")
 
     return data
 
@@ -226,7 +257,10 @@ def auto_handle_outliers(data: pd.DataFrame, numeric_columns: List, verbose: boo
         outliers, _ = detect_outliers(data, detect_outlier_method=detection_method, columns_subset=numeric_columns)
 
         # Drop all outlier rows as they are meaningful together
-        data = data.drop(index=outliers[numeric_columns[0]])
+        if bool(outliers):
+            n_rows = data.shape[0]
+            data = data.drop(index=outliers[numeric_columns[0]])
+            if verbose and n_rows - data.shape[0] > 0: logging.info(f"{n_rows - data.shape[0]} row(s) are dropped as outliers based on detecttion method '{detection_method.name}'.")
 
     else:
         # Per-column univariate detection
@@ -238,6 +272,33 @@ def auto_handle_outliers(data: pd.DataFrame, numeric_columns: List, verbose: boo
                 handling_method = _decide_outlier_handling_method(data[[col]], outliers)[col]
 
                 if not handling_method is None: # If there is need for actions
+                    n_rows = data.shape[0]
                     data[col] = handle_outliers(data=data[[col]], outliers=outliers, boundaries=boundaries, handle_outlier_method=handling_method)
+                    if verbose and n_rows - data.shape[0] > 0: logging.info(f"{n_rows - data.shape[0]} row(s) are handled by {handling_method.name} as outliers based on detecttion method '{detection_method.name}' on column {col}.")
+                else:
+                    if verbose: logging.info(f"Although column {col} has some outliers based on detecttion method '{detection_method.name}', there is no need tp action.")
 
     return data
+
+
+def auto_preprocess_for_analysis(data: pd.DataFrame, verbose: bool=False):
+    input_data = data.copy()
+
+    # Get datatypes of all columns
+    data_types, numeric_columns, categorical_columns, datetime_columns, bool_columns, datetime_dependent_numeric_columns = _get_datatypes(input_data, verbose)
+
+    # Handle missing values
+    result = auto_handle_missing_values(input_data, data_types, numeric_columns, categorical_columns, datetime_columns, bool_columns, datetime_dependent_numeric_columns, verbose)
+    # Handle duplicates
+    result = auto_handle_duplicates(result, categorical_columns, datetime_columns, verbose)
+    # Handle outliers
+    result = auto_handle_outliers(result, numeric_columns, verbose)
+    # Infer datatype conversions
+    result = convert_datatype_auto(result)
+
+    # Log data shape and types after preprocessing
+    if verbose: logging.info(f"Data shape after preprocessing is: {result.shape}\nNew datatypes are:\n{result.dtypes}")
+
+    return result
+
+

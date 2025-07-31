@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import pytest
 from src.dataglass import *
-from src.dataglass.automation.auto_preprocessing import _get_datatypes
+from src.dataglass.automation.auto_preprocessing import _get_datatypes, auto_preprocess_for_analysis
 pd.set_option('future.no_silent_downcasting', True)
 
 
@@ -228,3 +228,18 @@ def test_auto_handle_outliers_no_action(generate_test_data):
     
     assert np.allclose(result["C"], input_data["C"])
     
+# ============================================ #
+#   Automatic Preprocess tests  #
+# ============================================ #
+
+def test_handle_missing_drop(sample_data):
+    input_data = sample_data.copy()
+    result = auto_preprocess_for_analysis(input_data, verbose=True)
+    # Original data should remain unchanged
+    assert input_data.equals(sample_data)
+    # Check for eliminations
+    assert result.shape[0] < input_data.shape[0]
+    assert result.shape[1] < input_data.shape[1]
+    # Check for missing value and outlier handling
+    input_data.loc[9, "score"] = input_data["score"].median()
+    assert result.loc[15, "score"] == input_data.drop(index=[1,19])["score"].median()

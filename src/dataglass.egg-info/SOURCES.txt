@@ -19,4 +19,5 @@ src/dataglass/preprocessing/feature_scaling.py
 src/dataglass/preprocessing/missing_handling.py
 src/dataglass/preprocessing/outlier_handling.py
 src/dataglass/preprocessing/type_conversion.py
+tests/test_auto_preprocessing.py
 tests/test_preprocessing.py
