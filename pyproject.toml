@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dataglass"
-version = "0.8.0"
+version = "0.8.1"
 description = "dataglass is a Python library for data preprocessing, exploratory data analysis (EDA), and machine learning. It includes modules for handling missing values, detecting and resolving duplicates, managing outliers, feature encoding, type conversion, scaling, and pipeline integration. With its latest update, dataglass introduces intelligent automation which dynamically adapting preprocessing steps based on dataset characteristics, minimizing manual configuration and accelerating your workflow."
 readme = "README.md"
 requires-python = ">=3.10"

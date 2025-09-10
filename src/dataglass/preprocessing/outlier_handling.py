@@ -318,7 +318,7 @@ def handle_outliers(data : pd.DataFrame, handle_outlier_method : HandleOutlierMe
     # Check dataset to know how many duplicate values exist
     # Find duplicate values
     if verbose:
-        print(f"Dataset has {data.shape[0]} rows before handling outliers values.\nTop 10 of rows containing outliers are (Totally {len(all_drop_indexes)} rows):\n{data.iloc[list(all_drop_indexes)].head(10)}")
+        print(f"Dataset has {data.shape[0]} rows before handling outliers values.\nTop 10 of rows containing outliers are (Totally {len(all_drop_indexes)} rows):\n{data.loc[sorted(all_drop_indexes)].head(10)}")
 
     match handle_outlier_method:
         case HandleOutlierMethod.DROP:

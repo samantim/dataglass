@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: dataglass
-Version: 0.8.0
+Version: 0.8.1
 Summary: dataglass is a Python library for data preprocessing, exploratory data analysis (EDA), and machine learning. It includes modules for handling missing values, detecting and resolving duplicates, managing outliers, feature encoding, type conversion, scaling, and pipeline integration. With its latest update, dataglass introduces intelligent automation which dynamically adapting preprocessing steps based on dataset characteristics, minimizing manual configuration and accelerating your workflow.
 Author: Saman Teymouri
 Author-email: Saman Teymouri <saman.teymouri@gmail.com>
@@ -513,6 +513,7 @@ All other dependencies will be installed automatically via `pip install dataglas
 
 - ✅ Preprocessing Modules  
 - ✅ Custom Pipelines  
+- ✅ Automatic Preprocessing
 - ⏳ Exploratory Data Analysis (EDA) 
 - ⏳ Machine Learning Modules
 

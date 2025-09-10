@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="dataglass",
-    version="0.8.0",
+    version="0.8.1",
     description="dataglass is a Python library for data preprocessing, exploratory data analysis (EDA), and machine learning. "
                 "It includes modules for handling missing values, detecting and resolving duplicates, "
                 "managing outliers, feature encoding, type conversion, scaling, and pipeline integration. "
